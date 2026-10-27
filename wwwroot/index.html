@@ -1238,12 +1238,12 @@
     function renderMissionAssistPanel(mission) {
       const taskOptions = mission.tasks.map(task => `<option value="${escapeHtml(task.id)}">${escapeHtml(task.title)} · ${escapeHtml(task.status)}</option>`).join("");
       return `<section class="card stack">
-        <div><div class="eyebrow">Work on a task</div><h2 style="margin:0;font:600 14px Manrope">Mission assistant</h2><p class="hint">Uses only this Mission's details, relevant approved memory, and relevant attached document passages. It cannot perform external actions.</p></div>
+        <div><div class="eyebrow">Work on a task</div><h2 style="margin:0;font:600 14px Manrope">Mission assistant</h2><p class="hint">Uses this Mission's details, relevant approved memory, and relevant attached document passages. Web search is optional; it cannot perform external actions.</p></div>
         <div class="grid-two"><div class="field"><label for="missionAssistTask">Task (optional)</label><select id="missionAssistTask"><option value="">General Mission help</option>${taskOptions}</select></div>
           <div class="field"><label for="missionAssistAction">How can I help?</label><select id="missionAssistAction"><option value="chat">Make progress / ask a question</option><option value="explain">Explain a task</option><option value="draft">Generate a first draft</option><option value="breakdown">Break it into subtasks</option><option value="review">Review my work</option><option value="analyze">Analyze attached files</option></select></div></div>
         <div class="field"><label for="missionAssistPrompt">What would you like help with?</label><textarea id="missionAssistPrompt" maxlength="4000" rows="3" placeholder="Share a question, draft, or specific instruction..."></textarea></div>
-        <div class="toolbar"><button id="runMissionAssist" class="button primary" type="button" ${mission.status === "archived" ? "disabled" : ""}>Ask about this Mission</button><span id="missionAssistNotice" class="notice" role="status"></span></div>
-        ${state.missionAssistResult ? `<div class="answer-panel"><div class="markdown">${renderMarkdown(state.missionAssistResult.answer)}</div>${state.missionAssistResult.deliverableId ? `<div class="toolbar" style="margin-top:12px"><span class="notice success">Draft saved to Mission deliverables. The task was not marked complete.</span><button class="small-button" type="button" data-go-tab="deliverables">View deliverables</button></div>` : ""}<div class="hint" style="margin-top:10px">${escapeHtml(state.missionAssistResult.memoryNotice || "")}</div></div>` : ""}
+        <div class="toolbar"><label class="web-search-option" title="${webSearchConfigured ? `One credit per new query; repeats are cached for an hour. ${webSearchMonthlyRemaining} monthly searches remain.` : "Set TAVILY_API_KEY on the server to enable web search."}"><input id="missionAssistSearchWeb" type="checkbox" ${webSearchConfigured && webSearchMonthlyRemaining > 0 ? "" : "disabled"}> Search the web (uses a credit)</label><button id="runMissionAssist" class="button primary" type="button" ${mission.status === "archived" ? "disabled" : ""}>Ask about this Mission</button><span id="missionAssistNotice" class="notice" role="status"></span></div>
+        ${state.missionAssistResult ? `<div class="answer-panel"><div class="markdown">${renderMarkdown(state.missionAssistResult.answer)}</div>${state.missionAssistResult.sources?.length ? `<div class="web-sources"><span class="hint">Web sources</span>${state.missionAssistResult.sources.map(source => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a>`).join("")}</div>` : ""}${state.missionAssistResult.deliverableId ? `<div class="toolbar" style="margin-top:12px"><span class="notice success">Draft saved to Mission deliverables. The task was not marked complete.</span><button class="small-button" type="button" data-go-tab="deliverables">View deliverables</button></div>` : ""}<div class="hint" style="margin-top:10px">${escapeHtml(state.missionAssistResult.memoryNotice || "")}</div></div>` : ""}
       </section>`;
     }
     function wireMissionAssist(mission) {
@@ -1261,7 +1261,10 @@
       button.disabled = true;
       try {
         state.missionAssistResult = await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/assist`, {
-          taskId: selectedTask || null, action: selectedAction, prompt
+          taskId: selectedTask || null,
+          action: selectedAction,
+          prompt,
+          searchWeb: Boolean(document.querySelector("#missionAssistSearchWeb")?.checked)
         });
         await refreshMission();
       } catch (error) {
@@ -1672,11 +1675,16 @@
       webSearchMonthlyRemaining = Number.isInteger(status.webSearchMonthlyRemaining)
         ? status.webSearchMonthlyRemaining
         : 900;
-      const searchCheckbox = document.querySelector("#chatSearchWeb");
-      if (searchCheckbox) {
-        searchCheckbox.disabled = !webSearchConfigured || webSearchMonthlyRemaining <= 0;
-        searchCheckbox.parentElement.title = webSearchConfigured
-          ? webSearchMonthlyRemaining > 0
+      for (const checkbox of [
+        document.querySelector("#chatSearchWeb"),
+        document.querySelector("#missionAssistSearchWeb")
+      ]) {
+        if (!checkbox) continue;
+        const label = checkbox.parentElement;
+        const hasRemainingSearches = webSearchMonthlyRemaining > 0;
+        checkbox.disabled = !webSearchConfigured || !hasRemainingSearches;
+        label.title = webSearchConfigured
+          ? hasRemainingSearches
             ? `One credit per new query; repeats are cached for an hour. ${webSearchMonthlyRemaining} monthly searches remain.`
             : "The monthly web search allowance is used up."
           : "Set TAVILY_API_KEY on the server to enable web search.";
