@@ -1,0 +1,233 @@
+@baseUrl = http://localhost:5000
+
+# Missions, Project Memory, and Tavily search quotas use SQLite. By default the DB is in the host's local app-data folder.
+# Set TITANAI_DB_PATH to a writable persistent location for hosted deployments; an ephemeral container
+# filesystem does not preserve the database or quota counters when the service is replaced. Workspaces are anonymous
+# browser-cookie scopes (not login accounts), so clearing the cookie/browser data loses access to that workspace.
+
+### Start or resume the private browser workspace (keeps the workspace cookie)
+POST {{baseUrl}}/api/workspace
+Content-Type: application/json
+
+{}
+
+### Draft a Mission plan (requires GROQ_API_KEY)
+POST {{baseUrl}}/api/missions/draft
+Content-Type: application/json
+
+{
+  "goal": "Launch a technology YouTube channel and publish three videos",
+  "deadline": null,
+  "availableTime": "4 hours per week",
+  "constraints": "Start with existing equipment"
+}
+
+### List active Missions
+GET {{baseUrl}}/api/missions/
+
+### Create a reviewed Mission (replace with an edited plan proposal)
+POST {{baseUrl}}/api/missions/
+Content-Type: application/json
+
+{
+  "plan": {
+    "title": "Launch a technology channel",
+    "goal": "Launch a technology YouTube channel and publish three videos",
+    "expectedOutcome": "A channel with three published videos",
+    "successCriteria": ["Publish three videos"],
+    "summary": "The channel launch is ready to begin.",
+    "nextAction": "Choose a specific audience.",
+    "tasks": [
+      { "title": "Choose a niche", "description": "Compare topics and audiences.", "priority": "high", "dueDate": null, "subtasks": ["List candidate topics"] },
+      { "title": "Plan the first video", "description": "Outline a useful first episode.", "priority": "normal", "dueDate": null, "subtasks": [] },
+      { "title": "Record the first video", "description": "Record and edit a first draft.", "priority": "normal", "dueDate": null, "subtasks": [] }
+    ]
+  },
+  "constraints": "Start with existing equipment",
+  "availableTime": "4 hours per week",
+  "deadline": null
+}
+
+### Get a Mission and its related records (replace IDs with values from the API response)
+GET {{baseUrl}}/api/missions/replace-with-mission-id
+
+### Edit a Mission overview
+PUT {{baseUrl}}/api/missions/replace-with-mission-id
+Content-Type: application/json
+
+{
+  "title": "Launch a technology channel",
+  "goal": "Launch a technology YouTube channel and publish three videos",
+  "expectedOutcome": "A channel with three published videos",
+  "successCriteria": ["Publish three videos"],
+  "constraints": "Start with existing equipment",
+  "availableTime": "4 hours per week",
+  "deadline": null
+}
+
+### Pause, resume, complete, or archive a Mission
+POST {{baseUrl}}/api/missions/replace-with-mission-id/status
+Content-Type: application/json
+
+{ "status": "paused" }
+
+### Add a task
+POST {{baseUrl}}/api/missions/replace-with-mission-id/tasks
+Content-Type: application/json
+
+{
+  "title": "Interview a potential viewer",
+  "description": "Ask what technology topics they want explained.",
+  "priority": "normal",
+  "dueDate": null,
+  "subtasks": ["Prepare three questions"]
+}
+
+### Edit a task (status values: planned, in-progress, blocked, done)
+PUT {{baseUrl}}/api/missions/replace-with-mission-id/tasks/replace-with-task-id
+Content-Type: application/json
+
+{
+  "title": "Interview a potential viewer",
+  "description": "Ask what technology topics they want explained.",
+  "priority": "normal",
+  "status": "done",
+  "dueDate": null,
+  "subtasks": ["Prepare three questions"]
+}
+
+### Move a task earlier or later
+POST {{baseUrl}}/api/missions/replace-with-mission-id/tasks/replace-with-task-id/move
+Content-Type: application/json
+
+{ "direction": "up" }
+
+### Remove a task
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id/tasks/replace-with-task-id
+
+### Save user-approved Mission memory
+POST {{baseUrl}}/api/missions/replace-with-mission-id/memory
+Content-Type: application/json
+
+{ "category": "decision", "content": "Focus on accessible technology for beginners." }
+
+### Edit Mission memory (the previous revision is retained)
+PUT {{baseUrl}}/api/missions/replace-with-mission-id/memory/replace-with-memory-id
+Content-Type: application/json
+
+{ "category": "decision", "content": "Focus on practical technology for beginners." }
+
+### Delete one memory entry
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id/memory/replace-with-memory-id
+
+### Clear all memory for one Mission (keeps its tasks and deliverables)
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id/memory
+
+### Ask for Mission-scoped assistance (requires GROQ_API_KEY)
+POST {{baseUrl}}/api/missions/replace-with-mission-id/assist
+Content-Type: application/json
+
+{
+  "taskId": "replace-with-task-id",
+  "action": "draft",
+  "prompt": "Write an outline for the first video. Save it as a draft deliverable."
+}
+
+### Attach a PDF/TXT to a Mission (use a REST client's multipart file picker)
+POST {{baseUrl}}/api/knowledge/upload
+Content-Type: multipart/form-data; boundary=MissionFileBoundary
+
+--MissionFileBoundary
+Content-Disposition: form-data; name="missionId"
+
+replace-with-mission-id
+--MissionFileBoundary
+Content-Disposition: form-data; name="file"; filename="project-notes.txt"
+Content-Type: text/plain
+
+Replace this body with the text from the file to attach.
+--MissionFileBoundary--
+
+### Remove an attached Mission document
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id/documents/replace-with-document-id
+
+### Delete a saved Mission deliverable
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id/deliverables/replace-with-deliverable-id
+
+### Delete a Mission and all of its dependent data
+DELETE {{baseUrl}}/api/missions/replace-with-mission-id
+
+### Assistant configuration
+GET {{baseUrl}}/api/status
+
+### Multi-turn chat
+POST {{baseUrl}}/api/ask
+Content-Type: application/json
+
+{
+  "question": "Can you give me a practical example?",
+  "history": [
+    { "role": "user", "content": "What is a heat pump?" },
+    { "role": "assistant", "content": "A heat pump moves heat from one place to another." }
+  ]
+}
+
+### Ask a question with live web search (requires TAVILY_API_KEY)
+POST {{baseUrl}}/api/ask
+Content-Type: application/json
+
+{
+  "question": "What are the latest developments in reusable rockets?",
+  "searchWeb": true
+}
+
+### Improve writing
+POST {{baseUrl}}/api/transform
+Content-Type: application/json
+
+{
+  "action": "clarity",
+  "text": "The original draft to improve goes here."
+}
+
+### Compare decision options
+POST {{baseUrl}}/api/decision
+Content-Type: application/json
+
+{
+  "decision": "Choose a project planning approach",
+  "options": ["A weekly written plan", "A daily team meeting"],
+  "priorities": ["speed", "convenience"]
+}
+
+### Generate an action plan
+POST {{baseUrl}}/api/plan
+Content-Type: application/json
+
+{
+  "goal": "Prepare a small community workshop"
+}
+
+### Upload a document (attach a local PDF or TXT file in the REST client)
+POST {{baseUrl}}/api/knowledge/upload
+Content-Type: multipart/form-data; boundary=TitanBoundary
+
+--TitanBoundary
+Content-Disposition: form-data; name="file"; filename="notes.txt"
+Content-Type: text/plain
+
+Replace this body with the contents of a TXT file when testing upload.
+--TitanBoundary--
+
+### Ask about an uploaded document (replace the temporary document ID)
+POST {{baseUrl}}/api/knowledge/ask
+Content-Type: application/json
+
+{
+  "documentId": "replace-with-document-id",
+  "action": "question",
+  "question": "What are the main points?"
+}
+
+### Remove a temporary document (replace the temporary document ID)
+DELETE {{baseUrl}}/api/knowledge/replace-with-document-id

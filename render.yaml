@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: titanai
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/status
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: TAVILY_MONTHLY_SEARCH_LIMIT
+        value: "900"
+      - key: TAVILY_DAILY_SEARCH_LIMIT
+        value: "30"
+      - key: TAVILY_HOURLY_SEARCH_LIMIT
+        value: "5"

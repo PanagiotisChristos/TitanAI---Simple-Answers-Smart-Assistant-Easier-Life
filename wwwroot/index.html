@@ -1,0 +1,1693 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10111b">
+  <meta name="description" content="TitanAI brings chat, Missions, project memory, document knowledge, decisions, planning, and writing together.">
+  <title>TitanAI — Your AI workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10111b;
+      --sidebar: #141521;
+      --panel: #191a28;
+      --panel-raised: #202131;
+      --input: #141521;
+      --ink: #f0effb;
+      --muted: #a09fb5;
+      --subtle: #77768d;
+      --line: #2a2b3c;
+      --accent: #a99bff;
+      --accent-strong: #8d7af1;
+      --blue: #7bc5ff;
+      --success: #79d6ac;
+      --danger: #ff9aab;
+      --radius: 16px;
+      font-family: "DM Sans", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f5fa;
+      --sidebar: #eeedf5;
+      --panel: #fff;
+      --panel-raised: #f5f4fb;
+      --input: #fff;
+      --ink: #242337;
+      --muted: #66647b;
+      --subtle: #848198;
+      --line: #e2e0eb;
+      --accent: #6554ce;
+      --accent-strong: #5545b6;
+      --blue: #2672ac;
+      --success: #25885b;
+      --danger: #b94b60;
+    }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; min-height: 100vh; margin: 0; background: var(--bg); color: var(--ink); }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+      outline: 2px solid var(--accent); outline-offset: 2px;
+    }
+    .app { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 264px; flex: 0 0 264px; display: flex; flex-direction: column; padding: 21px 14px 14px;
+      border-right: 1px solid var(--line); background: var(--sidebar);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 0 10px 24px; }
+    .brand-mark {
+      width: 37px; height: 37px; display: grid; place-items: center; border-radius: 12px;
+      color: #14111f; background: linear-gradient(145deg, #c0b5ff, #85c9ff); font-size: 19px; font-weight: 800;
+    }
+    .brand-name { font: 800 17px Manrope, sans-serif; letter-spacing: -.5px; }
+    .brand-caption { margin-top: 1px; color: var(--subtle); font-size: 10px; }
+    .new-chat {
+      width: 100%; min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 9px;
+      border: 1px solid rgb(169 155 255 / 38%); border-radius: 11px; background: rgb(169 155 255 / 11%);
+      color: var(--ink); font-weight: 600; cursor: pointer;
+    }
+    .new-chat:hover { background: rgb(169 155 255 / 18%); }
+    .nav { display: grid; gap: 4px; margin-top: 23px; }
+    .nav-label { padding: 0 11px 8px; color: var(--subtle); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .nav-item {
+      width: 100%; min-height: 40px; display: flex; align-items: center; gap: 11px; padding: 8px 11px;
+      border: 0; border-radius: 9px; background: transparent; color: var(--muted); text-align: left; cursor: pointer;
+    }
+    .nav-item:hover { background: var(--panel-raised); color: var(--ink); }
+    .nav-item.active { background: rgb(169 155 255 / 13%); color: var(--accent); font-weight: 600; }
+    .nav-icon { width: 19px; text-align: center; font-size: 15px; }
+    .history { min-height: 0; flex: 1; overflow: auto; margin-top: 25px; }
+    .history-list { display: grid; gap: 3px; }
+    .history-item {
+      overflow: hidden; width: 100%; padding: 9px 10px; border: 0; border-radius: 8px; background: transparent;
+      color: var(--muted); text-align: left; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; cursor: pointer;
+    }
+    .history-item:hover, .history-item.active { background: var(--panel-raised); color: var(--ink); }
+    .sidebar-bottom { display: grid; gap: 5px; padding-top: 12px; border-top: 1px solid var(--line); }
+    .sidebar-bottom a { color: var(--muted); text-decoration: none; }
+    .sidebar-bottom a:hover { color: var(--ink); }
+    .main { min-width: 0; flex: 1; display: flex; flex-direction: column; }
+    .topbar {
+      height: 66px; flex: 0 0 66px; display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 0 clamp(18px, 4vw, 46px); border-bottom: 1px solid var(--line);
+    }
+    .topbar-title { font: 700 14px Manrope, sans-serif; }
+    .topbar-actions { display: flex; align-items: center; gap: 12px; }
+    .status { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+    .status.offline .status-dot { background: var(--danger); }
+    .icon-button, .button, .small-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line);
+      border-radius: 9px; background: var(--panel); color: var(--ink); cursor: pointer;
+    }
+    .icon-button { width: 36px; height: 36px; }
+    .button { min-height: 40px; padding: 9px 14px; font-size: 12px; font-weight: 600; }
+    .button.primary { border-color: transparent; background: var(--accent-strong); color: white; }
+    .button.primary:hover { filter: brightness(1.09); }
+    .button.secondary:hover, .small-button:hover, .icon-button:hover { border-color: var(--accent); }
+    .button:disabled, .small-button:disabled { opacity: .55; cursor: wait; }
+    .small-button { min-height: 30px; padding: 5px 9px; font-size: 11px; }
+    .button.danger { color: var(--danger); }
+    .small-button.listening { border-color: var(--danger); color: var(--danger); }
+    .mobile-menu { display: none; }
+    .workspace { width: min(100% - 48px, 960px); margin: 0 auto; padding: 44px 0 70px; }
+    .page-heading { margin-bottom: 28px; }
+    .eyebrow { margin-bottom: 9px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; }
+    h1 { margin: 0; font: 700 clamp(25px, 4vw, 34px)/1.2 Manrope, sans-serif; letter-spacing: -1px; }
+    .subtitle { max-width: 680px; margin: 9px 0 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .card { padding: 21px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+    .stack { display: grid; gap: 16px; }
+    .grid-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+    .field { display: grid; gap: 8px; }
+    .field label, .field-label { color: var(--muted); font-size: 11px; font-weight: 600; }
+    .field input, .field textarea, .field select, .task-editor input, .task-editor textarea {
+      width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 9px; background: var(--input);
+      color: var(--ink); padding: 11px 12px; font-size: 13px;
+    }
+    .field textarea { min-height: 110px; resize: vertical; line-height: 1.6; }
+    .field textarea.large { min-height: 220px; }
+    .field input::placeholder, .field textarea::placeholder { color: var(--subtle); }
+    .hint { color: var(--subtle); font-size: 11px; line-height: 1.6; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .notice { min-height: 18px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .notice.error { color: var(--danger); }
+    .notice.success { color: var(--success); }
+    .welcome-card { padding: clamp(24px, 5vw, 44px); text-align: center; }
+    .welcome-mark { margin-bottom: 14px; color: var(--accent); font-size: 24px; }
+    .welcome-card h2 { margin: 0; font: 700 21px Manrope, sans-serif; }
+    .welcome-card p { max-width: 560px; margin: 10px auto 0; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .starter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 24px; }
+    .starter {
+      min-height: 74px; padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel);
+      color: var(--muted); text-align: left; font-size: 12px; cursor: pointer;
+    }
+    .starter:hover { border-color: var(--accent); color: var(--ink); }
+    .chat-messages { display: grid; gap: 24px; margin-bottom: 22px; }
+    .chat-message { min-width: 0; display: grid; grid-template-columns: 31px minmax(0, 1fr); gap: 12px; }
+    .message-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: var(--panel-raised); color: var(--accent); font-size: 12px; font-weight: 700; }
+    .chat-message.user .message-mark { background: rgb(123 197 255 / 13%); color: var(--blue); }
+    .message-body { min-width: 0; padding-top: 4px; }
+    .message-role { margin-bottom: 7px; color: var(--subtle); font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+    .markdown { overflow-wrap: anywhere; color: var(--ink); font-size: 13px; line-height: 1.8; }
+    .markdown.error { color: var(--danger); }
+    .markdown p { margin: 0 0 10px; }
+    .markdown p:last-child { margin-bottom: 0; }
+    .markdown h1, .markdown h2, .markdown h3, .markdown h4 { margin: 19px 0 8px; font-size: 1.12em; letter-spacing: 0; }
+    .markdown ul, .markdown ol { margin: 7px 0 12px; padding-left: 23px; }
+    .markdown li { margin: 3px 0; }
+    .markdown code { padding: 2px 5px; border-radius: 5px; background: var(--panel-raised); font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .markdown pre { overflow: auto; margin: 10px 0; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--input); }
+    .markdown pre code { padding: 0; background: transparent; }
+    .markdown a { color: var(--blue); text-underline-offset: 3px; }
+    .table-wrap { overflow-x: auto; margin: 12px 0; }
+    .markdown table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .markdown th, .markdown td { min-width: 100px; padding: 9px 10px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .markdown th { background: var(--panel-raised); color: var(--ink); }
+    .message-actions { display: flex; gap: 7px; margin-top: 10px; }
+    .web-sources { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+    .web-sources a { color: var(--blue); font-size: 11px; text-underline-offset: 3px; }
+    .web-search-option { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .web-search-option input { accent-color: var(--accent-strong); }
+    .chat-composer { padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: var(--panel); }
+    .chat-composer textarea { width: 100%; min-height: 55px; max-height: 180px; padding: 7px; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; line-height: 1.5; }
+    .composer-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0 3px; }
+    .composer-footer .hint { font-size: 10px; }
+    .loading { display: inline-flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .spinner { width: 15px; height: 15px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .upload-zone { display: grid; place-items: center; gap: 9px; min-height: 150px; padding: 20px; border: 1px dashed var(--line); border-radius: 12px; background: var(--input); text-align: center; }
+    .upload-icon { color: var(--accent); font-size: 23px; }
+    .upload-zone strong { font-size: 13px; }
+    .upload-zone .hint { max-width: 430px; }
+    .progress { width: min(100%, 360px); height: 6px; overflow: hidden; border-radius: 99px; background: var(--panel-raised); }
+    .progress span { display: block; width: 0; height: 100%; background: var(--accent); transition: width 150ms ease; }
+    .document-list { display: grid; gap: 8px; }
+    .document-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .document-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; }
+    .document-meta { margin-top: 3px; color: var(--subtle); font-size: 10px; }
+    .document-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+    .answer-panel { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); }
+    .answer-panel h2 { margin: 0 0 13px; font: 600 13px Manrope, sans-serif; }
+    .mission-list { display: grid; gap: 10px; }
+    .mission-card { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); cursor: pointer; }
+    .mission-card:hover { border-color: var(--accent); }
+    .mission-card-top, .mission-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .mission-name { font: 700 14px Manrope, sans-serif; }
+    .mission-goal { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .mission-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--subtle); font-size: 10px; }
+    .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 10px; text-transform: capitalize; }
+    .status-pill.active { border-color: rgb(121 214 172 / 38%); color: var(--success); }
+    .status-pill.paused, .status-pill.blocked { border-color: rgb(255 154 171 / 40%); color: var(--danger); }
+    .mission-progress { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; }
+    .mission-progress .progress { flex: 1; }
+    .mission-tabs { display: flex; overflow: auto; gap: 5px; padding-bottom: 3px; border-bottom: 1px solid var(--line); }
+    .mission-tab { flex: 0 0 auto; padding: 9px 11px; border: 0; border-radius: 8px 8px 0 0; background: transparent; color: var(--muted); font-size: 11px; cursor: pointer; }
+    .mission-tab.active { background: var(--panel-raised); color: var(--accent); }
+    .mission-columns { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px, .7fr); gap: 15px; }
+    .mission-task { display: grid; grid-template-columns: 19px minmax(0, 1fr) auto; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+    .mission-task + .mission-task { margin-top: 9px; }
+    .mission-task > input[type="checkbox"] { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--accent-strong); }
+    .mission-task-title { font-size: 12px; font-weight: 700; }
+    .mission-task-title.done { color: var(--subtle); text-decoration: line-through; }
+    .mission-task-description { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .mission-subtasks { margin: 7px 0 0; padding-left: 17px; color: var(--subtle); font-size: 10px; line-height: 1.7; }
+    .mission-task-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+    .mission-task-edit { grid-column: 2 / -1; display: grid; gap: 9px; padding-top: 8px; }
+    .mission-task-edit input, .mission-task-edit textarea, .mission-task-edit select { width: 100%; padding: 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--input); color: var(--ink); font-size: 11px; }
+    .mission-task-edit textarea { min-height: 65px; resize: vertical; }
+    .memory-entry { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .memory-content { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+    .deliverable-content { max-height: 280px; overflow: auto; }
+    .mission-activity { display: grid; gap: 11px; }
+    .activity-item { display: grid; grid-template-columns: 9px minmax(0, 1fr); gap: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .activity-dot { width: 7px; height: 7px; margin-top: 5px; border-radius: 50%; background: var(--accent); }
+    .mission-preview-task { padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+    .mission-preview-task + .mission-preview-task { margin-top: 9px; }
+    .mission-empty { padding: 22px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; font-size: 12px; line-height: 1.7; }
+    .mission-inline-form { display: grid; gap: 9px; }
+    .mission-inline-form input, .mission-inline-form textarea, .mission-inline-form select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--input); color: var(--ink); font-size: 11px; }
+    .mission-inline-form textarea { min-height: 70px; resize: vertical; }
+    .mission-document-row, .mission-deliverable-row { display: flex; justify-content: space-between; align-items: start; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 9px; }
+    .memory-category { color: var(--accent); font-size: 10px; font-weight: 700; text-transform: capitalize; }
+    .option-row { display: grid; grid-template-columns: 1fr 36px; gap: 8px; }
+    .option-row + .option-row { margin-top: 8px; }
+    .remove-option { border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+    .priorities { display: flex; flex-wrap: wrap; gap: 8px; }
+    .priority {
+      display: flex; align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 999px;
+      color: var(--muted); font-size: 11px; cursor: pointer;
+    }
+    .priority:has(input:checked) { border-color: var(--accent); color: var(--accent); }
+    .priority input { accent-color: var(--accent-strong); }
+    .plan-select { max-width: 270px; }
+    .plan-progress { display: flex; align-items: center; gap: 12px; }
+    .plan-progress .progress { flex: 1; }
+    .task-list { display: grid; gap: 9px; }
+    .task { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: start; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 11px; background: var(--panel); }
+    .task > input[type="checkbox"] { width: 16px; height: 16px; margin-top: 3px; accent-color: var(--accent-strong); }
+    .task-title { font-size: 12px; font-weight: 700; }
+    .task-description { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .task-timing { margin-top: 7px; color: var(--subtle); font-size: 10px; }
+    .task.done .task-title, .task.done .task-description { color: var(--subtle); text-decoration: line-through; }
+    .task-actions { display: flex; gap: 5px; }
+    .task-editor { grid-column: 2 / -1; display: grid; gap: 8px; }
+    .task-editor textarea { min-height: 65px; resize: vertical; }
+    .compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .compare h2 { margin: 0 0 12px; color: var(--muted); font: 600 11px Manrope, sans-serif; text-transform: uppercase; letter-spacing: .6px; }
+    .settings-list { display: grid; gap: 13px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+    .setting-row:last-child { border-bottom: 0; }
+    .setting-title { font-size: 13px; font-weight: 600; }
+    .setting-description { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 20; max-width: min(420px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-raised); box-shadow: 0 12px 40px #0005; color: var(--ink); font-size: 12px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 850px) {
+      .sidebar { width: 230px; flex-basis: 230px; }
+      .workspace { width: min(100% - 36px, 960px); padding-top: 33px; }
+    }
+    @media (max-width: 680px) {
+      .sidebar { position: fixed; z-index: 15; inset: 0 auto 0 0; width: min(285px, 85vw); transform: translateX(-105%); transition: transform 170ms ease; box-shadow: 20px 0 40px #0005; }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-menu { display: inline-flex; }
+      .topbar { height: 58px; flex-basis: 58px; padding-inline: 14px; }
+      .topbar-actions { gap: 8px; }
+      .status { font-size: 10px; }
+      .workspace { width: min(100% - 28px, 960px); padding-top: 28px; }
+      .grid-two, .compare { grid-template-columns: 1fr; }
+      .starter-grid { grid-template-columns: 1fr; }
+      .task { grid-template-columns: 20px minmax(0, 1fr); }
+      .task-actions { grid-column: 2; }
+      .mission-columns { grid-template-columns: 1fr; }
+      .mission-task { grid-template-columns: 19px minmax(0, 1fr); }
+      .mission-task-tools { grid-column: 2; justify-content: flex-start; }
+      .mission-task-edit { grid-column: 2; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside id="sidebar" class="sidebar" aria-label="Main navigation">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">✳</span>
+        <div><div class="brand-name">TitanAI</div><div class="brand-caption">Your thoughtful AI workspace</div></div>
+      </div>
+      <button id="newChat" class="new-chat" type="button"><span aria-hidden="true">＋</span> New chat</button>
+      <nav class="nav" aria-label="Tools">
+        <div class="nav-label">Workspace</div>
+        <button class="nav-item active" type="button" data-page="chat"><span class="nav-icon">◌</span> AI Chat</button>
+        <button class="nav-item" type="button" data-page="knowledge"><span class="nav-icon">▤</span> Knowledge Hub</button>
+        <button class="nav-item" type="button" data-page="decision"><span class="nav-icon">◇</span> Decision Assistant</button>
+        <button class="nav-item" type="button" data-page="planner"><span class="nav-icon">✓</span> Action Planner</button>
+        <button class="nav-item" type="button" data-page="missions"><span class="nav-icon">⚑</span> Missions</button>
+        <button class="nav-item" type="button" data-page="writing"><span class="nav-icon">✎</span> Document Assistant</button>
+      </nav>
+      <section class="history" aria-label="Recent conversations">
+        <div class="nav-label">Recent chats</div>
+        <div id="chatHistory" class="history-list"></div>
+      </section>
+      <div class="sidebar-bottom">
+        <button class="nav-item" type="button" data-page="settings"><span class="nav-icon">⚙</span> Settings & privacy</button>
+        <a class="nav-item" href="https://www.youtube.com/@TechTitansGr" target="_blank" rel="noopener noreferrer"><span class="nav-icon">▷</span> TechTitansGr on YouTube</a>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-actions">
+          <button id="sidebarToggle" class="icon-button mobile-menu" type="button" aria-label="Open navigation">☰</button>
+          <div id="pageTitle" class="topbar-title">AI Chat</div>
+        </div>
+        <div class="topbar-actions">
+          <div id="serviceStatus" class="status" role="status"><span class="status-dot" aria-hidden="true"></span><span id="statusText">Checking assistant</span></div>
+          <button id="themeToggle" class="small-button" type="button" aria-pressed="true">Light mode</button>
+        </div>
+      </header>
+      <section id="workspace" class="workspace" aria-live="polite"></section>
+    </main>
+  </div>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script>
+    const workspace = document.querySelector("#workspace");
+    const pageTitle = document.querySelector("#pageTitle");
+    const chatHistory = document.querySelector("#chatHistory");
+    const sidebar = document.querySelector("#sidebar");
+    const toast = document.querySelector("#toast");
+    const sessionStore = (() => {
+      try { return window.sessionStorage; }
+      catch { return { getItem: () => null, setItem: () => { throw new Error("Session storage is unavailable."); } }; }
+    })();
+    const PAGE_TITLES = {
+      chat: "AI Chat", knowledge: "Knowledge Hub", decision: "Decision Assistant",
+      planner: "Action Planner", missions: "Missions", writing: "Document Assistant", settings: "Settings & privacy"
+    };
+    const state = {
+      page: "chat",
+      chatId: null,
+      missionChatId: null,
+      chats: loadJson("titanai-chats", []),
+      plans: loadJson("titanai-plans", []),
+      selectedPlanId: null,
+      documents: loadJson("titanai-documents-session", [], sessionStore),
+      activeMissionId: null,
+      missionTab: "overview",
+      missionDraft: null,
+      missionDraftOptions: null,
+      missionAssistResult: null,
+      missionBusy: false,
+      missions: [],
+      busy: false,
+      theme: loadTheme()
+    };
+    let webSearchConfigured = false;
+    let webSearchMonthlyRemaining = 900;
+    state.selectedPlanId = state.plans[0]?.id || null;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    let activeSpeech;
+    const workspaceReady = fetch("/api/workspace", { method: "POST" }).then(async response => {
+      if (!response.ok) throw new Error("Could not open a private TitanAI workspace.");
+      await response.json();
+      return true;
+    }).catch(error => {
+      showToast(error.message);
+      return false;
+    });
+    const randomId = () => crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    function loadJson(key, fallback, storage = localStorage) {
+      try {
+        const value = JSON.parse(storage.getItem(key) || "null");
+        return Array.isArray(value) ? value : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+    function loadTheme() {
+      try { return localStorage.getItem("titanai-theme") === "light" ? "light" : "dark"; }
+      catch { return "dark"; }
+    }
+    function saveJson(key, value, storage = localStorage) {
+      try {
+        storage.setItem(key, JSON.stringify(value));
+        return true;
+      } catch {
+        showToast("Browser storage is unavailable or full. Your latest changes may not be saved.");
+        return false;
+      }
+    }
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
+    function inlineMarkdown(value) {
+      return escapeHtml(value)
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+    }
+    function renderMarkdown(value) {
+      const lines = String(value).replace(/\r\n?/g, "\n").split("\n");
+      const output = [];
+      let paragraph = [];
+      let list = "";
+      let code = null;
+      let codeLines = [];
+      const closeList = () => {
+        if (list) output.push(`</${list}>`);
+        list = "";
+      };
+      const flushParagraph = () => {
+        if (paragraph.length) output.push(`<p>${paragraph.map(inlineMarkdown).join("<br>")}</p>`);
+        paragraph = [];
+      };
+      for (let index = 0; index < lines.length; index++) {
+        const line = lines[index];
+        const fence = line.match(/^\s*```/);
+        if (fence) {
+          flushParagraph();
+          closeList();
+          if (code !== null) {
+            output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+            code = null;
+            codeLines = [];
+          } else {
+            code = true;
+          }
+          continue;
+        }
+        if (code !== null) { codeLines.push(line); continue; }
+        if (!line.trim()) { flushParagraph(); closeList(); continue; }
+        const heading = line.match(/^(#{1,4})\s+(.+)$/);
+        if (heading) {
+          flushParagraph(); closeList();
+          const level = Math.min(heading[1].length + 1, 4);
+          output.push(`<h${level}>${inlineMarkdown(heading[2])}</h${level}>`);
+          continue;
+        }
+        if (/^\s*\|.*\|\s*$/.test(line)) {
+          flushParagraph();
+          closeList();
+          const rows = [];
+          while (index < lines.length && /^\s*\|.*\|\s*$/.test(lines[index])) {
+            rows.push(lines[index++].trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map(cell => cell.trim()));
+          }
+          index--;
+          const header = rows.shift() || [];
+          const body = rows.filter(row => !row.every(cell => /^:?-{3,}:?$/.test(cell)));
+          output.push(`<div class="table-wrap"><table><thead><tr>${header.map(cell => `<th>${inlineMarkdown(cell)}</th>`).join("")}</tr></thead><tbody>${body.map(row => `<tr>${row.map(cell => `<td>${inlineMarkdown(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+          continue;
+        }
+        const item = line.match(/^\s*(?:[-*]\s+|(\d+)\.\s+)(.+)$/);
+        if (item) {
+          flushParagraph();
+          const nextList = item[1] ? "ol" : "ul";
+          if (list !== nextList) { closeList(); list = nextList; output.push(`<${list}>`); }
+          output.push(`<li>${inlineMarkdown(item[2])}</li>`);
+          continue;
+        }
+        closeList();
+        paragraph.push(line);
+      }
+      flushParagraph();
+      closeList();
+      if (code !== null) output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+      return output.join("");
+    }
+    async function api(path, body, options = {}) {
+      if (!await workspaceReady) throw new Error("Could not open a private TitanAI workspace. Refresh and try again.");
+      const method = options.method || (body == null ? "GET" : "POST");
+      const request = {
+        method,
+        headers: options.form || body == null ? undefined : { "Content-Type": "application/json" },
+        signal: options.signal
+      };
+      if (body != null && method !== "GET" && method !== "HEAD") {
+        request.body = options.form ? body : JSON.stringify(body);
+      }
+      const response = await fetch(path, request);
+      const result = response.status === 204 ? null : await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || result.message || result.title || `Request failed (${response.status}).`);
+      return result;
+    }
+    function showToast(message) {
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(showToast.timeout);
+      showToast.timeout = setTimeout(() => { toast.hidden = true; }, 3200);
+    }
+    function setTheme(theme) {
+      state.theme = theme;
+      document.documentElement.dataset.theme = theme;
+      document.querySelector("#themeToggle").textContent = theme === "dark" ? "Light mode" : "Dark mode";
+      document.querySelector("#themeToggle").setAttribute("aria-pressed", String(theme === "dark"));
+      document.querySelector('meta[name="theme-color"]').content = theme === "dark" ? "#10111b" : "#f5f5fa";
+      try { localStorage.setItem("titanai-theme", theme); } catch { /* The selected theme remains active for this page. */ }
+    }
+    function activeChat() { return state.chats.find(chat => chat.id === state.chatId) || null; }
+    function saveChats() {
+      state.chats.sort((first, second) => second.updatedAt - first.updatedAt);
+      state.chats = state.chats.slice(0, 30);
+      saveJson("titanai-chats", state.chats);
+      renderHistory();
+    }
+    function renderHistory() {
+      chatHistory.innerHTML = state.chats.map(chat => {
+        const title = chat.title || "New conversation";
+        return `<button type="button" class="history-item${chat.id === state.chatId ? " active" : ""}" data-chat-id="${escapeHtml(chat.id)}" title="${escapeHtml(title)}">${escapeHtml(title)}</button>`;
+      }).join("");
+    }
+    function setPage(page) {
+      state.page = page;
+      pageTitle.textContent = PAGE_TITLES[page] || PAGE_TITLES.chat;
+      document.querySelectorAll(".nav-item[data-page]").forEach(button => button.classList.toggle("active", button.dataset.page === page));
+      sidebar.classList.remove("open");
+      renderPage();
+    }
+    function renderPage() {
+      if (state.page === "chat") renderChat();
+      else if (state.page === "knowledge") renderKnowledge();
+      else if (state.page === "decision") renderDecision();
+      else if (state.page === "planner") renderPlanner();
+      else if (state.page === "missions") renderMissions();
+      else if (state.page === "writing") renderWriting();
+      else renderSettings();
+    }
+    function pageHeader(eyebrow, title, description) {
+      return `<div class="page-heading"><div class="eyebrow">${eyebrow}</div><h1>${title}</h1><p class="subtitle">${description}</p></div>`;
+    }
+    function renderChat() {
+      const chat = activeChat();
+      const messages = chat?.messages || [];
+      const intro = messages.length === 0;
+      const missionId = chat?.missionId || state.missionChatId;
+      const missionTitle = chat?.missionTitle || state.activeMission?.title || "Selected Mission";
+      workspace.innerHTML = `
+        ${missionId ? `<div class="answer-panel mission-chat-banner" style="margin-bottom:14px"><div class="mission-toolbar"><div><strong>Mission context is on</strong><div class="hint">${escapeHtml(missionTitle)} · only this Mission's approved context is included.</div></div><button id="removeMissionChatContext" class="small-button" type="button">Remove context</button></div></div>` : ""}
+        ${intro ? `
+          <div class="welcome-card card">
+            <div class="welcome-mark" aria-hidden="true">✳</div>
+            <h2>What can I help you with?</h2>
+            <p>Ask a question, explore an idea, or get help with something you're working on. I'll keep it clear and conversational.</p>
+            <div class="starter-grid">
+              <button class="starter" type="button" data-starter="Explain a tricky idea in simple terms">Explain a tricky idea in simple terms</button>
+              <button class="starter" type="button" data-starter="Help me think through a decision">Help me think through a decision</button>
+              <button class="starter" type="button" data-starter="Help me get started on a project">Help me get started on a project</button>
+            </div>
+          </div>` : `<div id="chatMessages" class="chat-messages"></div>`}
+        <form id="chatForm" class="chat-composer" style="${intro ? "margin-top:18px" : ""}">
+          <label class="sr-only" for="chatInput">Message TitanAI</label>
+          <textarea id="chatInput" maxlength="1000" placeholder="Message TitanAI..." rows="2" required></textarea>
+          <div class="composer-footer"><div class="toolbar"><span class="hint">Enter to send · Shift + Enter for a new line</span><label class="web-search-option" title="${webSearchConfigured ? `One credit per new query; repeats are cached for an hour. ${webSearchMonthlyRemaining} monthly searches remain.` : "Set TAVILY_API_KEY on the server to enable web search."}"><input id="chatSearchWeb" type="checkbox" ${webSearchConfigured ? "" : "disabled"}> Search the web</label></div><div class="toolbar"><button id="chatMic" class="small-button" type="button" aria-label="Speak your question" title="Speak your question">Speak</button><button class="button primary" type="submit" ${state.busy ? "disabled" : ""}>${state.busy ? "Thinking…" : "Send ↗"}</button></div></div>
+        </form>
+        <div class="hint" style="text-align:center;margin-top:10px">AI can make mistakes. Check important information.</div>`;
+      if (!intro) renderChatMessages(messages);
+      document.querySelector("#chatForm").addEventListener("submit", event => {
+        event.preventDefault();
+        sendChat(document.querySelector("#chatInput").value, false, document.querySelector("#chatSearchWeb").checked);
+      });
+      document.querySelector("#chatInput").addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form.requestSubmit(); }
+      });
+      document.querySelector("#chatMic").addEventListener("click", event => startSpeechRecognition(event.currentTarget));
+      document.querySelector("#removeMissionChatContext")?.addEventListener("click", () => {
+        const chat = activeChat();
+        if (chat) { chat.missionId = null; chat.missionTitle = null; saveChats(); }
+        state.missionChatId = null;
+        renderChat();
+      });
+      workspace.querySelectorAll("[data-starter]").forEach(button => button.addEventListener("click", () => sendChat(button.dataset.starter)));
+    }
+    function renderChatMessages(messages) {
+      const container = document.querySelector("#chatMessages");
+      if (!container) return;
+      container.innerHTML = messages.map((message, index) => {
+        const isUser = message.role === "user";
+        const lastAssistant = !isUser && index === messages.length - 1;
+        const error = message.error ? " error" : "";
+        const sources = !isUser && message.sources?.length
+          ? `<div class="web-sources"><span class="hint">Web sources</span>${message.sources.map(source => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.title)}</a>`).join("")}</div>`
+          : "";
+        return `<article class="chat-message ${isUser ? "user" : "assistant"}">
+          <div class="message-mark" aria-hidden="true">${isUser ? "Y" : "✳"}</div>
+          <div class="message-body"><div class="message-role">${isUser ? "You" : "TitanAI"}</div>
+            <div class="markdown${error}">${renderMarkdown(message.content)}</div>
+            ${sources}
+            ${!isUser ? `<div class="message-actions"><button class="small-button" type="button" data-copy-index="${index}">Copy</button>${"speechSynthesis" in window ? `<button class="small-button" type="button" data-listen-index="${index}">Listen</button>` : ""}${lastAssistant ? `<button class="small-button" type="button" data-regenerate>Regenerate</button>` : ""}</div>` : ""}
+          </div>
+        </article>`;
+      }).join("") + (state.busy ? `<div class="loading" role="status"><span class="spinner" aria-hidden="true"></span>Thinking through it…</div>` : "");
+      container.querySelectorAll("[data-copy-index]").forEach(button => button.addEventListener("click", async () => {
+        const item = messages[Number(button.dataset.copyIndex)];
+        try { await navigator.clipboard.writeText(item.content); button.textContent = "Copied"; }
+        catch { showToast("Clipboard access is unavailable in this browser."); }
+      }));
+      container.querySelectorAll("[data-listen-index]").forEach(button =>
+        button.addEventListener("click", () => toggleSpeech(messages[Number(button.dataset.listenIndex)].content, button)));
+      container.querySelector("[data-regenerate]")?.addEventListener("click", () => regenerateChat());
+    }
+    function toggleSpeech(text, button) {
+      if (activeSpeech?.button === button) {
+        activeSpeech = undefined;
+        window.speechSynthesis.cancel();
+        button.textContent = "Listen";
+        return;
+      }
+      if (activeSpeech) activeSpeech.button.textContent = "Listen";
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = navigator.language || "en-US";
+      const speech = { button, utterance };
+      activeSpeech = speech;
+      button.textContent = "Stop";
+      utterance.onend = () => {
+        if (activeSpeech === speech) { activeSpeech = undefined; button.textContent = "Listen"; }
+      };
+      utterance.onerror = event => {
+        if (activeSpeech === speech) {
+          activeSpeech = undefined;
+          button.textContent = "Listen";
+          showToast(`Speech playback failed (${event.error}). Check your device's sound and speech settings.`);
+        }
+      };
+      window.speechSynthesis.speak(utterance);
+    }
+    function startSpeechRecognition(button) {
+      if (!SpeechRecognition) { showToast("Speech recognition isn't available in this browser. You can type your question instead."); return; }
+      if (recognition) { recognition.stop(); return; }
+      recognition = new SpeechRecognition();
+      recognition.lang = navigator.language || "en-US";
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.onstart = () => { button.textContent = "Stop"; button.classList.add("listening"); };
+      recognition.onresult = event => {
+        let transcript = "";
+        for (let index = 0; index < event.results.length; index++) transcript += event.results[index][0].transcript;
+        const input = document.querySelector("#chatInput");
+        if (input) input.value = transcript;
+      };
+      recognition.onerror = event => {
+        showToast(event.error === "not-allowed"
+          ? "Allow microphone access in your browser to use speech input."
+          : "Speech input stopped. You can type your question instead.");
+      };
+      recognition.onend = () => {
+        recognition = null;
+        button.textContent = "Speak";
+        button.classList.remove("listening");
+        document.querySelector("#chatInput")?.focus();
+      };
+      try { recognition.start(); }
+      catch {
+        recognition = null;
+        showToast("Could not start speech input. Try again or type your question.");
+      }
+    }
+    async function sendChat(rawQuestion, regenerate = false, searchWeb = false) {
+      const question = String(rawQuestion || "").trim();
+      if (state.busy || !question) return;
+      let chat = activeChat();
+      if (!chat) {
+        chat = {
+          id: randomId(), title: question.slice(0, 46), messages: [],
+          missionId: state.missionChatId, missionTitle: state.activeMission?.title, updatedAt: Date.now()
+        };
+        state.chatId = chat.id;
+        state.missionChatId = null;
+        state.chats.unshift(chat);
+      }
+      if (!regenerate) chat.messages.push({ role: "user", content: question, searchWeb });
+      else searchWeb = Boolean(chat.messages.at(-1)?.searchWeb);
+      let contextBudget = 24_000;
+      const context = chat.messages.slice(0, -1).slice(-20).reverse().reduce((recent, message) => {
+        if (contextBudget <= 0) return recent;
+        const content = message.content.slice(-Math.min(8_000, contextBudget));
+        contextBudget -= content.length;
+        recent.push({ role: message.role, content });
+        return recent;
+      }, []).reverse();
+      chat.updatedAt = Date.now();
+      state.busy = true;
+      renderHistory();
+      renderChat();
+      try {
+        const result = await api("/api/ask", {
+          question: chat.messages.at(-1).content,
+          history: context,
+          missionId: chat.missionId || null,
+          searchWeb
+        });
+        chat.messages.push({ role: "assistant", content: result.answer, sources: result.sources || [] });
+      } catch (error) {
+        chat.messages.push({ role: "assistant", content: error.message, error: true });
+      } finally {
+        state.busy = false;
+        chat.updatedAt = Date.now();
+        saveChats();
+        renderChat();
+        workspace.scrollIntoView({ behavior: "smooth", block: "end" });
+      }
+    }
+    function regenerateChat() {
+      const chat = activeChat();
+      if (!chat || state.busy || chat.messages.length < 2) return;
+      if (chat.messages.at(-1).role === "assistant") chat.messages.pop();
+      if (chat.messages.at(-1).role !== "user") return;
+      sendChat(chat.messages.at(-1).content, true);
+    }
+    function renderKnowledge() {
+      workspace.innerHTML = `
+        ${pageHeader("Your source material", "Knowledge Hub", "Upload a text-based PDF or TXT, then ask questions, get a document-wide summary, or create study material. Your files aren't saved permanently.")}
+        <div class="stack">
+          <section class="card stack">
+            <div class="upload-zone">
+              <div class="upload-icon" aria-hidden="true">⇧</div>
+              <strong>Choose a PDF or TXT file</strong>
+              <div class="hint">Up to 8 MB per file. Text-based PDFs only; scanned documents need OCR, which isn't included.</div>
+              <label class="button secondary" for="documentFile">Browse files</label>
+              <input id="documentFile" class="sr-only" type="file" accept=".pdf,.txt,application/pdf,text/plain">
+              <div id="uploadProgress" class="progress" hidden aria-label="Upload progress"><span></span></div>
+              <div id="knowledgeNotice" class="notice" role="status"></div>
+            </div>
+            <div id="documentList" class="document-list"></div>
+          </section>
+          <section class="card stack">
+            <div class="field"><label for="knowledgeDocumentSelect">Use this document</label><select id="knowledgeDocumentSelect"></select></div>
+            <div class="field"><label for="knowledgeQuestion">What would you like to know?</label><textarea id="knowledgeQuestion" placeholder="Ask a question about the documents above..." rows="3"></textarea></div>
+            <div class="toolbar">
+              <button class="button primary" type="button" data-knowledge-action="question">Ask about documents</button>
+              <button class="button secondary" type="button" data-knowledge-action="summarize">Summarize document</button>
+              <button class="button secondary" type="button" data-knowledge-action="study">Study questions</button>
+              <button class="button secondary" type="button" data-knowledge-action="flashcards">Make flashcards</button>
+            </div>
+            <div id="knowledgeResult" class="answer-panel" hidden></div>
+            <div id="knowledgeActionNotice" class="notice" role="status"></div>
+          </section>
+        </div>`;
+      renderDocuments();
+      document.querySelector("#documentFile").addEventListener("change", event => {
+        const file = event.target.files?.[0];
+        if (file) uploadDocument(file);
+        event.target.value = "";
+      });
+      workspace.querySelectorAll("[data-knowledge-action]").forEach(button =>
+        button.addEventListener("click", () => runKnowledgeAction(button.dataset.knowledgeAction)));
+    }
+    function renderDocuments() {
+      const list = document.querySelector("#documentList");
+      if (!list) return;
+      list.innerHTML = state.documents.map(document => `
+        <div class="document-row"><div style="min-width:0"><div class="document-name">${escapeHtml(document.fileName)}</div><div class="document-meta">${document.passageCount} passages · temporary</div></div>
+          <button class="small-button" type="button" data-remove-document="${escapeHtml(document.documentId)}">Remove</button></div>`).join("");
+      list.querySelectorAll("[data-remove-document]").forEach(button =>
+        button.addEventListener("click", () => removeDocument(button.dataset.removeDocument)));
+      const select = document.querySelector("#knowledgeDocumentSelect");
+      if (select) {
+        const selected = select.value || state.documents[0]?.documentId;
+        select.innerHTML = state.documents.length
+          ? state.documents.map(document => `<option value="${escapeHtml(document.documentId)}">${escapeHtml(document.fileName)}</option>`).join("")
+          : `<option value="">Upload a document first</option>`;
+        if (selected && state.documents.some(document => document.documentId === selected)) select.value = selected;
+      }
+    }
+    async function uploadDocument(file) {
+      const notice = document.querySelector("#knowledgeNotice");
+      const progress = document.querySelector("#uploadProgress");
+      const bar = progress.querySelector("span");
+      if (file.size > 8 * 1024 * 1024) { notice.textContent = "That file is over the 8 MB limit."; notice.className = "notice error"; return; }
+      progress.hidden = false;
+      bar.style.width = "0%";
+      notice.textContent = `Uploading and extracting ${file.name}…`;
+      notice.className = "notice";
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/api/knowledge/upload");
+          xhr.upload.onprogress = event => {
+            if (event.lengthComputable) bar.style.width = `${Math.max(3, Math.round(event.loaded / event.total * 100))}%`;
+          };
+          xhr.onload = () => {
+            let body = {};
+            try { body = JSON.parse(xhr.responseText); } catch { /* The message below covers malformed responses. */ }
+            if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+            else reject(new Error(body.detail || body.message || body.title || "The document could not be uploaded."));
+          };
+          xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+          xhr.send(formData);
+        });
+        state.documents.unshift(result);
+        saveJson("titanai-documents-session", state.documents, sessionStore);
+        renderDocuments();
+        document.querySelector("#knowledgeDocumentSelect").value = result.documentId;
+        notice.textContent = `${result.fileName} is ready. Ask a question or choose an action below.`;
+        notice.className = "notice success";
+        bar.style.width = "100%";
+      } catch (error) {
+        notice.textContent = error.message;
+        notice.className = "notice error";
+      } finally {
+        setTimeout(() => { if (progress.isConnected) progress.hidden = true; }, 900);
+      }
+    }
+    async function removeDocument(id) {
+      try {
+        await api(`/api/knowledge/${encodeURIComponent(id)}`, null, { method: "DELETE" });
+        state.documents = state.documents.filter(document => document.documentId !== id);
+        saveJson("titanai-documents-session", state.documents, sessionStore);
+        renderDocuments();
+      } catch (error) { showToast(error.message); }
+    }
+    async function runKnowledgeAction(action) {
+      const notice = document.querySelector("#knowledgeActionNotice");
+      const resultPanel = document.querySelector("#knowledgeResult");
+      const documentId = document.querySelector("#knowledgeDocumentSelect").value;
+      if (!documentId) { notice.textContent = "Upload a document first."; notice.className = "notice error"; return; }
+      const question = document.querySelector("#knowledgeQuestion").value.trim();
+      if (action === "question" && !question) { notice.textContent = "Add a question about your documents."; notice.className = "notice error"; return; }
+      notice.innerHTML = `<span class="loading"><span class="spinner"></span>Working from relevant document passages…</span>`;
+      notice.className = "notice";
+      resultPanel.hidden = true;
+      try {
+        const result = await api("/api/knowledge/ask", {
+          documentId, action, question
+        });
+        resultPanel.innerHTML = `<h2>${action === "question" ? "Document-supported answer" : action === "summarize" ? "Document summary" : action === "study" ? "Study questions" : "Flashcards"}</h2><div class="markdown">${renderMarkdown(result.answer)}</div>`;
+        resultPanel.hidden = false;
+        notice.textContent = "Answers are grounded in extracted text; page or section references are included when available.";
+        notice.className = "notice success";
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    function renderDecision() {
+      workspace.innerHTML = `
+        ${pageHeader("Think it through", "Decision Assistant", "Compare options against what matters to you. TitanAI will work only from the details you provide and call out uncertainty.")}
+        <form id="decisionForm" class="card stack">
+          <div class="field"><label for="decision">What are you deciding?</label><textarea id="decision" maxlength="2000" placeholder="For example: Which approach should our small team take for the next project?" required></textarea></div>
+          <div class="field"><div class="field-label">Your options</div><div id="options"></div><button id="addOption" class="small-button" type="button">＋ Add an option</button></div>
+          <div class="field"><div class="field-label">What matters most? (optional)</div><div class="priorities">
+            ${["Cost", "Quality", "Speed", "Reliability", "Convenience"].map(item => `<label class="priority"><input type="checkbox" value="${item.toLowerCase()}">${item}</label>`).join("")}
+          </div></div>
+          <div class="toolbar"><button class="button primary" type="submit">Compare options</button><span id="decisionNotice" class="notice" role="status"></span></div>
+        </form>
+        <section id="decisionResult" class="answer-panel" style="margin-top:16px" hidden><h2>Balanced comparison</h2><div class="markdown"></div></section>`;
+      const options = document.querySelector("#options");
+      const addOption = value => {
+        if (options.children.length >= 6) return;
+        const row = document.createElement("div");
+        row.className = "option-row";
+        row.innerHTML = `<input maxlength="300" aria-label="Decision option" placeholder="Describe an option"><button class="remove-option" type="button" aria-label="Remove option">×</button>`;
+        row.querySelector("input").value = value || "";
+        row.querySelector("button").addEventListener("click", () => { if (options.children.length > 2) row.remove(); });
+        options.append(row);
+      };
+      addOption(); addOption();
+      document.querySelector("#addOption").addEventListener("click", () => addOption());
+      document.querySelector("#decisionForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const decision = document.querySelector("#decision").value.trim();
+        const optionValues = [...options.querySelectorAll("input")].map(input => input.value.trim()).filter(Boolean);
+        const priorities = [...document.querySelectorAll(".priority input:checked")].map(input => input.value);
+        const notice = document.querySelector("#decisionNotice");
+        const result = document.querySelector("#decisionResult");
+        notice.innerHTML = `<span class="loading"><span class="spinner"></span>Weighing the trade-offs…</span>`;
+        result.hidden = true;
+        try {
+          const answer = await api("/api/decision", { decision, options: optionValues, priorities });
+          result.querySelector(".markdown").innerHTML = renderMarkdown(answer.answer);
+          result.hidden = false;
+          notice.textContent = "Comparison is based only on what you shared.";
+          notice.className = "notice success";
+        } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+      });
+    }
+    function renderPlanner() {
+      const selected = state.plans.find(plan => plan.id === state.selectedPlanId);
+      workspace.innerHTML = `
+        ${pageHeader("From intention to action", "Action Planner", "Turn a goal into manageable steps. Plans are saved in this browser and stay private to this device.")}
+        <div class="stack">
+          <form id="planForm" class="card stack">
+            <div class="field"><label for="goal">What's your goal?</label><textarea id="goal" maxlength="2000" placeholder="Describe something you'd like to accomplish..." required></textarea></div>
+            <div class="toolbar"><button class="button primary" type="submit">Create a plan</button><span id="planNotice" class="notice" role="status"></span></div>
+          </form>
+          ${state.plans.length ? `<section class="card stack">
+            <div class="toolbar"><label class="field-label" for="planSelect">Saved plans</label><select id="planSelect" class="field plan-select">${state.plans.map(plan => `<option value="${escapeHtml(plan.id)}" ${plan.id === state.selectedPlanId ? "selected" : ""}>${escapeHtml(plan.goal.slice(0, 56))}</option>`).join("")}</select><button id="deletePlan" class="small-button" type="button">Delete plan</button></div>
+            <div id="planDetails"></div>
+          </section>` : `<div class="welcome-card card"><div class="welcome-mark">✓</div><h2>Your next step starts here</h2><p>Create a plan above. You can edit tasks, check them off, and pick up where you left off later.</p></div>`}
+        </div>`;
+      document.querySelector("#planForm").addEventListener("submit", createPlan);
+      document.querySelector("#planSelect")?.addEventListener("change", event => { state.selectedPlanId = event.target.value; renderPlanner(); });
+      document.querySelector("#deletePlan")?.addEventListener("click", () => {
+        if (!selected || !confirm("Delete this saved plan?")) return;
+        state.plans = state.plans.filter(plan => plan.id !== selected.id);
+        state.selectedPlanId = state.plans[0]?.id || null;
+        savePlans(); renderPlanner();
+      });
+      if (selected) renderPlanDetails(selected);
+    }
+    async function createPlan(event) {
+      event.preventDefault();
+      const goal = document.querySelector("#goal").value.trim();
+      const notice = document.querySelector("#planNotice");
+      notice.innerHTML = `<span class="loading"><span class="spinner"></span>Building practical steps…</span>`;
+      try {
+        const response = await api("/api/plan", { goal });
+        const plan = {
+          id: randomId(), goal, createdAt: Date.now(),
+          tasks: response.tasks.map(task => ({ id: randomId(), title: task.title, description: task.description, timing: task.timing, done: false }))
+        };
+        state.plans.unshift(plan);
+        state.selectedPlanId = plan.id;
+        savePlans();
+        renderPlanner();
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    function savePlans() { saveJson("titanai-plans", state.plans); }
+    function renderPlanDetails(plan) {
+      const container = document.querySelector("#planDetails");
+      const done = plan.tasks.filter(task => task.done).length;
+      const percent = plan.tasks.length ? Math.round(done / plan.tasks.length * 100) : 0;
+      container.innerHTML = `
+        <div class="page-heading" style="margin:5px 0 18px"><h2 style="margin:0;font:600 16px Manrope">${escapeHtml(plan.goal)}</h2><p class="subtitle">Your checklist saves automatically in this browser.</p></div>
+        <div class="plan-progress"><div class="progress"><span style="width:${percent}%"></span></div><span class="hint">${done} of ${plan.tasks.length} complete</span></div>
+        <div class="task-list" style="margin-top:15px">${plan.tasks.map(task => `
+          <article class="task${task.done ? " done" : ""}" data-task-id="${escapeHtml(task.id)}">
+            <input type="checkbox" aria-label="Mark ${escapeHtml(task.title)} complete" ${task.done ? "checked" : ""}>
+            ${task.editing ? `<div class="task-editor"><input class="edit-title" maxlength="120" value="${escapeHtml(task.title)}" aria-label="Task title"><textarea class="edit-description" maxlength="500" aria-label="Task description">${escapeHtml(task.description)}</textarea><input class="edit-timing" maxlength="80" value="${escapeHtml(task.timing || "")}" aria-label="Suggested timing"><div class="toolbar"><button class="small-button" type="button" data-save-task>Save</button><button class="small-button" type="button" data-cancel-task>Cancel</button></div></div>` :
+              `<div><div class="task-title">${escapeHtml(task.title)}</div><div class="task-description">${escapeHtml(task.description)}</div>${task.timing ? `<div class="task-timing">Suggested timing: ${escapeHtml(task.timing)}</div>` : ""}</div><div class="task-actions"><button class="small-button" type="button" data-edit-task>Edit</button><button class="small-button" type="button" data-delete-task aria-label="Delete task">Delete</button></div>`}
+          </article>`).join("")}
+        </div><button id="addTask" class="small-button" type="button">＋ Add a task</button>`;
+      container.querySelectorAll(".task").forEach(row => {
+        const task = plan.tasks.find(item => item.id === row.dataset.taskId);
+        row.querySelector('input[type="checkbox"]')?.addEventListener("change", event => { task.done = event.target.checked; savePlans(); renderPlanDetails(plan); });
+        row.querySelector("[data-edit-task]")?.addEventListener("click", () => { task.editing = true; renderPlanDetails(plan); });
+        row.querySelector("[data-delete-task]")?.addEventListener("click", () => { plan.tasks = plan.tasks.filter(item => item.id !== task.id); savePlans(); renderPlanDetails(plan); });
+        row.querySelector("[data-save-task]")?.addEventListener("click", () => {
+          task.title = row.querySelector(".edit-title").value.trim() || task.title;
+          task.description = row.querySelector(".edit-description").value.trim();
+          task.timing = row.querySelector(".edit-timing").value.trim();
+          delete task.editing; savePlans(); renderPlanDetails(plan);
+        });
+        row.querySelector("[data-cancel-task]")?.addEventListener("click", () => { delete task.editing; renderPlanDetails(plan); });
+      });
+      container.querySelector("#addTask").addEventListener("click", () => {
+        plan.tasks.push({ id: randomId(), title: "New task", description: "", timing: "", done: false, editing: true });
+        renderPlanDetails(plan);
+        container.querySelector(".edit-title")?.focus();
+      });
+    }
+    async function renderMissions() {
+      if (state.activeMissionId) {
+        await renderMissionWorkspace();
+        return;
+      }
+      if (state.missionCreating) {
+        renderMissionCreation();
+        return;
+      }
+      workspace.innerHTML = `${pageHeader("Plan, work, remember", "Missions", "Turn a goal into a project you can keep moving forward. Each Mission has its own tasks, files, deliverables, and user-controlled memory.")}<div class="loading"><span class="spinner"></span>Loading your Missions…</div>`;
+      try {
+        state.missions = await api("/api/missions/", null, { method: "GET" });
+        if (state.page !== "missions" || state.activeMissionId) return;
+        const active = state.missions.filter(mission => mission.status !== "completed" && mission.status !== "archived");
+        const completed = state.missions.filter(mission => mission.status === "completed" || mission.status === "archived");
+        workspace.innerHTML = `
+          ${pageHeader("Plan, work, remember", "Missions", "Turn a goal into a project you can keep moving forward. Each Mission has its own tasks, files, deliverables, and user-controlled memory.")}
+          <div class="toolbar" style="justify-content:space-between;margin-bottom:17px"><span class="hint">Your Mission data is saved privately in this browser workspace.</span><button id="createMissionButton" class="button primary" type="button">＋ Create a Mission</button></div>
+          <div class="stack">
+            <section><div class="nav-label" style="padding-left:0">In progress · ${active.length}</div><div class="mission-list">${active.length ? active.map(renderMissionCard).join("") : `<div class="mission-empty">No active Missions yet. Start with a goal in your own words.</div>`}</div></section>
+            <section><div class="nav-label" style="padding-left:0">Completed & archived · ${completed.length}</div><div class="mission-list">${completed.length ? completed.map(renderMissionCard).join("") : `<div class="mission-empty">Completed and archived Missions will appear here.</div>`}</div></section>
+          </div>`;
+        document.querySelector("#createMissionButton").addEventListener("click", () => {
+          state.missionCreating = true;
+          state.missionDraft = null;
+          state.missionDraftOptions = null;
+          renderMissions();
+        });
+        workspace.querySelectorAll("[data-open-mission]").forEach(card => {
+          card.addEventListener("click", () => openMission(card.dataset.openMission));
+          card.addEventListener("keydown", event => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              openMission(card.dataset.openMission);
+            }
+          });
+        });
+      } catch (error) {
+        workspace.innerHTML = `${pageHeader("Plan, work, remember", "Missions", "Your saved projects live in this private workspace.")}<div class="notice error">${escapeHtml(error.message)}</div><button id="retryMissions" class="button secondary" type="button">Try again</button>`;
+        document.querySelector("#retryMissions").addEventListener("click", renderMissions);
+      }
+    }
+    function renderMissionCard(mission) {
+      return `<article class="mission-card" tabindex="0" role="button" data-open-mission="${escapeHtml(mission.id)}" aria-label="Open Mission ${escapeHtml(mission.title)}">
+        <div class="mission-card-top"><div><div class="mission-name">${escapeHtml(mission.title)}</div><div class="mission-goal">${escapeHtml(mission.goal)}</div></div><span class="status-pill ${escapeHtml(mission.status)}">${escapeHtml(mission.status)}</span></div>
+        <div class="mission-progress"><div class="progress"><span style="width:${mission.progressPercent}%"></span></div><span>${mission.progressPercent}% · ${mission.completedTaskCount}/${mission.taskCount} tasks</span></div>
+        <div class="mission-meta">${mission.deadline ? `<span>Target ${escapeHtml(mission.deadline)}</span>` : ""}<span>Updated ${escapeHtml(new Date(mission.updatedAt).toLocaleDateString())}</span></div>
+      </article>`;
+    }
+    function renderMissionCreation() {
+      const options = state.missionDraftOptions || { deadline: "", availableTime: "", constraints: "" };
+      workspace.innerHTML = `
+        ${pageHeader("Start with the outcome", "Create a Mission", "Describe what you want to achieve. Optional details help shape the plan; review and edit everything before it is saved.")}
+        <form id="missionGoalForm" class="card stack">
+          <div class="field"><label for="missionGoal">What would you like to accomplish?</label><textarea id="missionGoal" maxlength="2000" placeholder="For example: Launch a YouTube channel about technology and publish the first three videos." required>${escapeHtml(state.missionDraft?.goal || "")}</textarea><span class="hint">A sentence or two is enough to get started.</span></div>
+          <details class="field"><summary class="field-label" style="cursor:pointer">Optional planning details</summary>
+            <div class="grid-two" style="margin-top:10px">
+              <div class="field"><label for="missionDeadline">Target date</label><input id="missionDeadline" type="date" value="${escapeHtml(options.deadline || "")}"></div>
+              <div class="field"><label for="missionTime">Time available</label><input id="missionTime" maxlength="200" placeholder="e.g. 4 hours per week" value="${escapeHtml(options.availableTime || "")}"></div>
+            </div>
+            <div class="field" style="margin-top:12px"><label for="missionConstraints">Constraints or preferences</label><textarea id="missionConstraints" maxlength="1000" rows="2" placeholder="Budget, tools, schedule, or anything else to account for">${escapeHtml(options.constraints || "")}</textarea></div>
+          </details>
+          <div class="toolbar"><button class="button primary" type="submit" ${state.missionBusy ? "disabled" : ""}>${state.missionBusy ? "Planning…" : "Draft my plan"}</button><button id="cancelMissionCreate" class="button secondary" type="button">Cancel</button><span id="missionDraftNotice" class="notice" role="status"></span></div>
+        </form>
+        ${state.missionDraft ? renderMissionDraftPreview(state.missionDraft) : ""}`;
+      document.querySelector("#missionGoalForm").addEventListener("submit", createMissionDraft);
+      document.querySelector("#cancelMissionCreate").addEventListener("click", () => {
+        state.missionCreating = false; state.missionDraft = null; state.missionDraftOptions = null; renderMissions();
+      });
+      if (state.missionDraft) wireMissionDraftPreview();
+    }
+    async function createMissionDraft(event) {
+      event.preventDefault();
+      state.missionDraftOptions = {
+        deadline: document.querySelector("#missionDeadline").value,
+        availableTime: document.querySelector("#missionTime").value.trim(),
+        constraints: document.querySelector("#missionConstraints").value.trim()
+      };
+      const goal = document.querySelector("#missionGoal").value.trim();
+      const notice = document.querySelector("#missionDraftNotice");
+      notice.innerHTML = `<span class="loading"><span class="spinner"></span>Shaping your Mission plan…</span>`;
+      notice.className = "notice";
+      state.missionBusy = true;
+      try {
+        state.missionDraft = await api("/api/missions/draft", { goal, ...state.missionDraftOptions });
+        notice.textContent = "Plan drafted. Review and edit the details before saving.";
+        notice.className = "notice success";
+        renderMissionCreation();
+      } catch (error) {
+        state.missionBusy = false;
+        notice.textContent = error.message;
+        notice.className = "notice error";
+      } finally {
+        state.missionBusy = false;
+      }
+    }
+    function renderMissionDraftPreview(draft) {
+      return `<section id="missionDraftPreview" class="card stack" style="margin-top:16px">
+        <div><div class="eyebrow">Review before saving</div><h2 style="margin:0;font:700 17px Manrope">Your Mission plan</h2><p class="hint">These are suggestions, not completed work. Edit any field before accepting.</p></div>
+        <div class="field"><label for="draftTitle">Mission title</label><input id="draftTitle" maxlength="120" value="${escapeHtml(draft.title)}"></div>
+        <div class="field"><label for="draftOutcome">Expected outcome</label><textarea id="draftOutcome" maxlength="1000">${escapeHtml(draft.expectedOutcome)}</textarea></div>
+        <div class="field"><label for="draftCriteria">Success criteria · one per line</label><textarea id="draftCriteria" maxlength="3000">${escapeHtml(draft.successCriteria.join("\n"))}</textarea></div>
+        <div class="field"><div class="field-label">Ordered task plan · review and edit each task before starting</div>
+          ${draft.tasks.map((task, index) => `<div class="mission-preview-task" data-draft-task="${index}"><div class="field"><label for="draftTaskTitle${index}">Task ${index + 1}</label><input id="draftTaskTitle${index}" data-draft-title maxlength="120" value="${escapeHtml(task.title)}"></div><div class="field" style="margin-top:8px"><label for="draftTaskDescription${index}">Description</label><textarea id="draftTaskDescription${index}" data-draft-description maxlength="1000" rows="2">${escapeHtml(task.description)}</textarea></div><div class="grid-two" style="margin-top:8px"><label class="sr-only" for="draftTaskPriority${index}">Priority</label><select id="draftTaskPriority${index}" data-draft-priority>${["low","normal","high"].map(priority => `<option value="${priority}" ${task.priority === priority ? "selected" : ""}>${priority} priority</option>`).join("")}</select><label class="sr-only" for="draftTaskDue${index}">Suggested date</label><input id="draftTaskDue${index}" data-draft-due type="date" value="${escapeHtml(task.dueDate || "")}"></div><div class="field" style="margin-top:8px"><label for="draftTaskSubtasks${index}">Subtasks · one per line</label><textarea id="draftTaskSubtasks${index}" data-draft-subtasks maxlength="1600" rows="2">${escapeHtml(task.subtasks.join("\n"))}</textarea></div></div>`).join("")}
+        </div>
+        <div class="field"><label for="draftSummary">Starting project summary</label><textarea id="draftSummary" maxlength="1000">${escapeHtml(draft.summary)}</textarea></div>
+        <div class="field"><label for="draftNextAction">Suggested first action</label><input id="draftNextAction" maxlength="500" value="${escapeHtml(draft.nextAction)}"></div>
+        <div class="toolbar"><button id="acceptMissionDraft" class="button primary" type="button">Accept plan & start Mission</button><button id="redraftMission" class="button secondary" type="button">Revise with AI</button><span id="acceptMissionNotice" class="notice" role="status"></span></div>
+      </section>`;
+    }
+    function wireMissionDraftPreview() {
+      document.querySelector("#acceptMissionDraft").addEventListener("click", acceptMissionDraft);
+      document.querySelectorAll("[data-draft-task]").forEach(row => {
+        row.querySelector("[data-draft-title]").addEventListener("input", event => state.missionDraft.tasks[Number(row.dataset.draftTask)].title = event.target.value);
+        row.querySelector("[data-draft-description]").addEventListener("input", event => state.missionDraft.tasks[Number(row.dataset.draftTask)].description = event.target.value);
+        row.querySelector("[data-draft-priority]").addEventListener("change", event => state.missionDraft.tasks[Number(row.dataset.draftTask)].priority = event.target.value);
+        row.querySelector("[data-draft-due]").addEventListener("change", event => state.missionDraft.tasks[Number(row.dataset.draftTask)].dueDate = event.target.value || null);
+        row.querySelector("[data-draft-subtasks]").addEventListener("input", event => state.missionDraft.tasks[Number(row.dataset.draftTask)].subtasks = event.target.value.split("\n").map(item => item.trim()).filter(Boolean));
+      });
+      document.querySelector("#redraftMission").addEventListener("click", () => {
+        const goal = document.querySelector("#missionGoal").value;
+        const modifications = document.querySelector("#draftSummary").value.trim();
+        document.querySelector("#missionGoal").value = `${goal}\n\nPlease revise the plan to account for: ${modifications}`.slice(0, 2000);
+        document.querySelector("#missionGoalForm").requestSubmit();
+      });
+    }
+    async function acceptMissionDraft() {
+      const plan = {
+        ...state.missionDraft,
+        title: document.querySelector("#draftTitle").value.trim(),
+        expectedOutcome: document.querySelector("#draftOutcome").value.trim(),
+        successCriteria: document.querySelector("#draftCriteria").value.split("\n").map(item => item.trim()).filter(Boolean),
+        summary: document.querySelector("#draftSummary").value.trim(),
+        nextAction: document.querySelector("#draftNextAction").value.trim()
+      };
+      const notice = document.querySelector("#acceptMissionNotice");
+      notice.innerHTML = `<span class="loading"><span class="spinner"></span>Saving your Mission…</span>`;
+      try {
+        const mission = await api("/api/missions/", { plan, ...state.missionDraftOptions });
+        state.missionCreating = false;
+        state.missionDraft = null;
+        state.activeMissionId = mission.id;
+        state.missionTab = "overview";
+        localStorage.setItem("titanai-last-mission", mission.id);
+        await renderMissions();
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    async function openMission(id, tab = "overview") {
+      state.activeMissionId = id;
+      state.missionTab = tab;
+      state.missionAssistResult = null;
+      try { localStorage.setItem("titanai-last-mission", id); } catch { /* Mission selection still works for this page. */ }
+      await renderMissions();
+    }
+    async function leaveMission() {
+      state.activeMissionId = null;
+      state.missionAssistResult = null;
+      try { localStorage.removeItem("titanai-last-mission"); } catch { /* The list remains available for this page. */ }
+      await renderMissions();
+    }
+    async function renderMissionWorkspace() {
+      if (!state.activeMissionId) { await renderMissions(); return; }
+      workspace.innerHTML = `<div class="loading"><span class="spinner"></span>Opening your Mission…</div>`;
+      try {
+        const mission = await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}`, null, { method: "GET" });
+        if (state.activeMissionId !== mission.id) return;
+        state.activeMission = mission;
+        pageTitle.textContent = mission.title;
+        workspace.innerHTML = `
+          <div class="mission-toolbar" style="margin-bottom:20px"><button id="backToMissions" class="small-button" type="button">← All Missions</button><div class="toolbar">
+            ${mission.status === "paused" ? `<button class="small-button" data-mission-status="active" type="button">Resume</button>` : mission.status !== "archived" && mission.status !== "completed" ? `<button class="small-button" data-mission-status="paused" type="button">Pause</button>` : ""}
+            ${mission.status === "archived" ? `<button class="small-button" data-mission-status="active" type="button">Restore</button>` : `<button class="small-button" data-mission-status="archived" type="button">Archive</button>`}
+            <button id="deleteMission" class="small-button" type="button">Delete</button>
+          </div></div>
+          ${pageHeader("Mission workspace", mission.title, mission.goal)}
+          <div class="mission-tabs" role="tablist" aria-label="Mission sections">
+            ${[["overview","Overview"],["tasks","Tasks"],["memory","Project Memory"],["files","Files"],["deliverables","Deliverables"],["activity","Activity"]].map(([key,label]) => `<button class="mission-tab${state.missionTab === key ? " active" : ""}" type="button" role="tab" aria-selected="${state.missionTab === key}" data-mission-tab="${key}">${label}${key === "memory" ? ` (${mission.memory.length})` : key === "files" ? ` (${mission.documents.length})` : key === "tasks" ? ` (${mission.tasks.length})` : ""}</button>`).join("")}
+          </div>
+          <div id="missionPanel" style="padding-top:17px"></div>`;
+        document.querySelector("#backToMissions").addEventListener("click", leaveMission);
+        workspace.querySelectorAll("[data-mission-status]").forEach(button => button.addEventListener("click", () => setMissionStatus(button.dataset.missionStatus)));
+        document.querySelector("#deleteMission").addEventListener("click", deleteMission);
+        workspace.querySelectorAll("[data-mission-tab]").forEach(button => button.addEventListener("click", () => {
+          state.missionTab = button.dataset.missionTab;
+          state.missionAssistResult = null;
+          renderMissionPanel();
+        }));
+        renderMissionPanel();
+      } catch (error) {
+        workspace.innerHTML = `<div class="notice error">${escapeHtml(error.message)}</div><button class="button secondary" type="button" id="missionBackError">Back to Missions</button>`;
+        document.querySelector("#missionBackError").addEventListener("click", leaveMission);
+      }
+    }
+    function renderMissionPanel() {
+      const panel = document.querySelector("#missionPanel");
+      const mission = state.activeMission;
+      if (!panel || !mission) return;
+      if (state.missionTab === "tasks") renderMissionTasks(panel, mission);
+      else if (state.missionTab === "memory") renderMissionMemory(panel, mission);
+      else if (state.missionTab === "files") renderMissionFiles(panel, mission);
+      else if (state.missionTab === "deliverables") renderMissionDeliverables(panel, mission);
+      else if (state.missionTab === "activity") renderMissionActivity(panel, mission);
+      else renderMissionOverview(panel, mission);
+    }
+    function renderMissionOverview(panel, mission) {
+      const done = mission.tasks.filter(task => task.status === "done").length;
+      const progress = mission.tasks.length ? Math.round(done / mission.tasks.length * 100) : 0;
+      panel.innerHTML = `
+        <div class="mission-columns">
+          <div class="stack">
+            <section class="card stack">
+              <div class="mission-toolbar"><div><div class="eyebrow">Current state</div><h2 style="margin:0;font:700 16px Manrope">Mission overview</h2></div><span class="status-pill ${escapeHtml(mission.status)}">${escapeHtml(mission.status)}</span></div>
+              <div class="mission-progress"><div class="progress"><span style="width:${progress}%"></span></div><span>${progress}% · ${done} of ${mission.tasks.length} complete</span></div>
+              <div><div class="field-label">Expected outcome</div><p class="subtitle">${escapeHtml(mission.expectedOutcome)}</p></div>
+              <div><div class="field-label">Success criteria</div>${mission.successCriteria.length ? `<ul class="mission-subtasks">${mission.successCriteria.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>` : `<p class="hint">No success criteria added yet.</p>`}</div>
+              ${mission.constraints ? `<div><div class="field-label">Constraints</div><p class="subtitle">${escapeHtml(mission.constraints)}</p></div>` : ""}
+              ${mission.availableTime ? `<div class="hint">Available time: ${escapeHtml(mission.availableTime)}</div>` : ""}
+              ${mission.deadline ? `<div class="hint">Target date: ${escapeHtml(mission.deadline)}</div>` : ""}
+              <div class="answer-panel"><div class="field-label">Current summary</div><p class="subtitle">${escapeHtml(mission.summary || "No summary yet.")}</p><div class="field-label" style="margin-top:10px">Next planned action</div><p class="subtitle">${escapeHtml(mission.nextAction || mission.tasks.find(task => task.status !== "done")?.title || "Choose or add a task to continue.")}</p></div>
+              <details><summary class="field-label" style="cursor:pointer">Edit Mission overview</summary>${renderMissionOverviewEditor(mission)}</details>
+            </section>
+            ${renderMissionAssistPanel(mission)}
+          </div>
+          <aside class="stack">
+            <section class="card"><div class="mission-toolbar"><h2 style="margin:0;font:600 13px Manrope">Next tasks</h2><button class="small-button" type="button" data-go-tab="tasks">View all</button></div>${mission.tasks.filter(task => task.status !== "done").slice(0, 4).map(task => `<div class="mission-task" style="grid-template-columns:16px 1fr;margin-top:8px"><span class="status-pill ${escapeHtml(task.status)}">${escapeHtml(task.status)}</span><div><div class="mission-task-title">${escapeHtml(task.title)}</div><div class="mission-meta">${escapeHtml(task.priority)} priority ${task.dueDate ? `· ${escapeHtml(task.dueDate)}` : ""}</div></div></div>`).join("") || `<div class="mission-empty" style="margin-top:10px">No outstanding tasks.</div>`}</section>
+            <section class="card stack"><h2 style="margin:0;font:600 13px Manrope">Continue in chat</h2><p class="hint">Start a regular chat with only this Mission's relevant context and approved memory.</p><button id="missionContinueChat" class="button secondary" type="button">Open Mission chat</button></section>
+            <section class="card stack"><h2 style="margin:0;font:600 13px Manrope">Mission resources</h2><div class="hint">${mission.documents.length} attached file${mission.documents.length === 1 ? "" : "s"} · ${mission.deliverables.length} saved deliverable${mission.deliverables.length === 1 ? "" : "s"}</div><button class="small-button" type="button" data-go-tab="files">Manage files</button><button class="small-button" type="button" data-go-tab="deliverables">View deliverables</button><button class="small-button" type="button" data-go-tab="memory">Review project memory</button></section>
+          </aside>
+        </div>`;
+      panel.querySelector("[data-go-tab='tasks']").addEventListener("click", () => selectMissionTab("tasks"));
+      panel.querySelectorAll("[data-go-tab]").forEach(button => button.addEventListener("click", () => selectMissionTab(button.dataset.goTab)));
+      document.querySelector("#missionOverviewForm")?.addEventListener("submit", saveMissionOverview);
+      document.querySelector("#missionContinueChat").addEventListener("click", () => {
+        state.missionChatId = mission.id;
+        state.chatId = null;
+        setPage("chat");
+      });
+      wireMissionAssist(mission);
+    }
+    function renderMissionOverviewEditor(mission) {
+      return `<form id="missionOverviewForm" class="mission-inline-form" style="margin-top:12px">
+        <label class="sr-only" for="editMissionTitle">Mission title</label><input id="editMissionTitle" maxlength="120" value="${escapeHtml(mission.title)}" required>
+        <label class="sr-only" for="editMissionGoal">Mission goal</label><textarea id="editMissionGoal" maxlength="2000" required>${escapeHtml(mission.goal)}</textarea>
+        <label class="sr-only" for="editMissionOutcome">Expected outcome</label><textarea id="editMissionOutcome" maxlength="1000" required>${escapeHtml(mission.expectedOutcome)}</textarea>
+        <label class="sr-only" for="editMissionCriteria">Success criteria</label><textarea id="editMissionCriteria" maxlength="3000" placeholder="Success criteria, one per line">${escapeHtml(mission.successCriteria.join("\n"))}</textarea>
+        <label class="sr-only" for="editMissionConstraints">Constraints</label><textarea id="editMissionConstraints" maxlength="1000" placeholder="Constraints">${escapeHtml(mission.constraints)}</textarea>
+        <label class="sr-only" for="editMissionTime">Available time</label><input id="editMissionTime" maxlength="200" placeholder="Available time" value="${escapeHtml(mission.availableTime)}">
+        <label class="sr-only" for="editMissionDeadline">Deadline</label><input id="editMissionDeadline" type="date" value="${escapeHtml(mission.deadline || "")}">
+        <button class="small-button" type="submit">Save overview</button><span id="missionEditNotice" class="notice" role="status"></span>
+      </form>`;
+    }
+    async function saveMissionOverview(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const notice = form.querySelector("#missionEditNotice");
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}`, {
+          title: form.querySelector("#editMissionTitle").value,
+          goal: form.querySelector("#editMissionGoal").value,
+          expectedOutcome: form.querySelector("#editMissionOutcome").value,
+          successCriteria: form.querySelector("#editMissionCriteria").value.split("\n").map(item => item.trim()).filter(Boolean),
+          constraints: form.querySelector("#editMissionConstraints").value,
+          availableTime: form.querySelector("#editMissionTime").value,
+          deadline: form.querySelector("#editMissionDeadline").value || null
+        }, { method: "PUT" });
+        notice.textContent = "Mission overview saved.";
+        notice.className = "notice success";
+        await refreshMission();
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    function renderMissionAssistPanel(mission) {
+      const taskOptions = mission.tasks.map(task => `<option value="${escapeHtml(task.id)}">${escapeHtml(task.title)} · ${escapeHtml(task.status)}</option>`).join("");
+      return `<section class="card stack">
+        <div><div class="eyebrow">Work on a task</div><h2 style="margin:0;font:600 14px Manrope">Mission assistant</h2><p class="hint">Uses only this Mission's details, relevant approved memory, and relevant attached document passages. It cannot perform external actions.</p></div>
+        <div class="grid-two"><div class="field"><label for="missionAssistTask">Task (optional)</label><select id="missionAssistTask"><option value="">General Mission help</option>${taskOptions}</select></div>
+          <div class="field"><label for="missionAssistAction">How can I help?</label><select id="missionAssistAction"><option value="chat">Make progress / ask a question</option><option value="explain">Explain a task</option><option value="draft">Generate a first draft</option><option value="breakdown">Break it into subtasks</option><option value="review">Review my work</option><option value="analyze">Analyze attached files</option></select></div></div>
+        <div class="field"><label for="missionAssistPrompt">What would you like help with?</label><textarea id="missionAssistPrompt" maxlength="4000" rows="3" placeholder="Share a question, draft, or specific instruction..."></textarea></div>
+        <div class="toolbar"><button id="runMissionAssist" class="button primary" type="button" ${mission.status === "archived" ? "disabled" : ""}>Ask about this Mission</button><span id="missionAssistNotice" class="notice" role="status"></span></div>
+        ${state.missionAssistResult ? `<div class="answer-panel"><div class="markdown">${renderMarkdown(state.missionAssistResult.answer)}</div>${state.missionAssistResult.deliverableId ? `<div class="toolbar" style="margin-top:12px"><span class="notice success">Draft saved to Mission deliverables. The task was not marked complete.</span><button class="small-button" type="button" data-go-tab="deliverables">View deliverables</button></div>` : ""}<div class="hint" style="margin-top:10px">${escapeHtml(state.missionAssistResult.memoryNotice || "")}</div></div>` : ""}
+      </section>`;
+    }
+    function wireMissionAssist(mission) {
+      document.querySelector("#runMissionAssist").addEventListener("click", runMissionAssist);
+      document.querySelectorAll("#missionPanel [data-go-tab]").forEach(button => button.addEventListener("click", () => selectMissionTab(button.dataset.goTab)));
+    }
+    async function runMissionAssist(taskId, action) {
+      const selectedTask = taskId ?? document.querySelector("#missionAssistTask")?.value ?? "";
+      const selectedAction = action ?? document.querySelector("#missionAssistAction")?.value ?? "chat";
+      const prompt = document.querySelector("#missionAssistPrompt")?.value.trim() || "";
+      const notice = document.querySelector("#missionAssistNotice");
+      notice.innerHTML = `<span class="loading"><span class="spinner"></span>Using relevant Mission context…</span>`;
+      notice.className = "notice";
+      const button = document.querySelector("#runMissionAssist");
+      button.disabled = true;
+      try {
+        state.missionAssistResult = await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/assist`, {
+          taskId: selectedTask || null, action: selectedAction, prompt
+        });
+        await refreshMission();
+      } catch (error) {
+        notice.textContent = error.message;
+        notice.className = "notice error";
+        button.disabled = false;
+      }
+    }
+    function renderMissionTasks(panel, mission) {
+      const tasks = mission.tasks;
+      panel.innerHTML = `<div class="stack">
+        <section class="card stack"><div class="mission-toolbar"><div><div class="eyebrow">Actual task state</div><h2 style="margin:0;font:700 15px Manrope">Task checklist</h2></div><span class="hint">${tasks.filter(task => task.status === "done").length} / ${tasks.length} complete</span></div>
+          ${tasks.length ? tasks.map((task, index) => `<article class="mission-task" data-task="${escapeHtml(task.id)}">
+            <input type="checkbox" aria-label="Mark ${escapeHtml(task.title)} complete" ${task.status === "done" ? "checked" : ""}>
+            <div><div class="mission-task-title${task.status === "done" ? " done" : ""}">${index + 1}. ${escapeHtml(task.title)}</div><div class="mission-task-description">${escapeHtml(task.description)}</div>
+              <div class="mission-meta"><span class="status-pill ${escapeHtml(task.status)}">${escapeHtml(task.status)}</span><span>${escapeHtml(task.priority)} priority</span>${task.dueDate ? `<span>Suggested ${escapeHtml(task.dueDate)}</span>` : ""}</div>
+              ${task.subtasks.length ? `<ul class="mission-subtasks">${task.subtasks.map(subtask => `<li>${escapeHtml(subtask)}</li>`).join("")}</ul>` : ""}
+            </div>
+            <div class="mission-task-tools"><button class="small-button" type="button" data-task-assist="explain">Explain</button><button class="small-button" type="button" data-task-assist="draft">Draft</button><button class="small-button" type="button" data-task-edit>Edit</button><button class="small-button" type="button" data-task-up ${index === 0 ? "disabled" : ""} aria-label="Move task up">↑</button><button class="small-button" type="button" data-task-down ${index === tasks.length - 1 ? "disabled" : ""} aria-label="Move task down">↓</button><button class="small-button" type="button" data-task-delete>Delete</button></div>
+            <details class="mission-task-edit"><summary class="field-label">Edit task details</summary><form class="mission-inline-form" data-task-edit-form>
+              <input name="title" maxlength="120" aria-label="Task title" value="${escapeHtml(task.title)}" required>
+              <textarea name="description" maxlength="1000" aria-label="Task description">${escapeHtml(task.description)}</textarea>
+              <div class="grid-two"><select name="priority" aria-label="Task priority">${["low","normal","high"].map(priority => `<option value="${priority}" ${task.priority === priority ? "selected" : ""}>${priority} priority</option>`).join("")}</select><select name="status" aria-label="Task status">${[["planned","Planned"],["in-progress","In progress"],["blocked","Blocked"],["done","Done"]].map(([value,label]) => `<option value="${value}" ${task.status === value ? "selected" : ""}>${label}</option>`).join("")}</select></div>
+              <input type="date" name="dueDate" aria-label="Suggested date" value="${escapeHtml(task.dueDate || "")}">
+              <textarea name="subtasks" maxlength="1600" aria-label="Subtasks, one per line" placeholder="Subtasks, one per line">${escapeHtml(task.subtasks.join("\n"))}</textarea>
+              <button class="small-button" type="submit">Save task</button></form></details>
+          </article>`).join("") : `<div class="mission-empty">This Mission has no tasks yet. Add one below.</div>`}
+        </section>
+        <form id="missionAddTaskForm" class="card stack"><h2 style="margin:0;font:600 13px Manrope">Add a task</h2><input name="title" maxlength="120" aria-label="New task title" placeholder="A clear next action" required><textarea name="description" maxlength="1000" aria-label="New task description" placeholder="Optional details"></textarea><div class="grid-two"><select name="priority" aria-label="Task priority"><option value="normal">Normal priority</option><option value="high">High priority</option><option value="low">Low priority</option></select><input name="dueDate" type="date" aria-label="Suggested task date"></div><textarea name="subtasks" maxlength="1600" aria-label="New task subtasks" placeholder="Optional subtasks, one per line"></textarea><div class="toolbar"><button class="button primary" type="submit">Add task</button><span id="addTaskNotice" class="notice" role="status"></span></div></form>
+      </div>`;
+      panel.querySelectorAll(".mission-task").forEach(row => {
+        const task = tasks.find(item => item.id === row.dataset.task);
+        row.querySelector('input[type="checkbox"]').addEventListener("change", event =>
+          updateMissionTask(task, { status: event.currentTarget.checked ? "done" : "planned" }));
+        row.querySelector("[data-task-edit]").addEventListener("click", () => row.querySelector("details").open = !row.querySelector("details").open);
+        row.querySelector("[data-task-delete]").addEventListener("click", () => deleteMissionTask(task));
+        row.querySelector("[data-task-up]").addEventListener("click", () => moveMissionTask(task, "up"));
+        row.querySelector("[data-task-down]").addEventListener("click", () => moveMissionTask(task, "down"));
+        row.querySelectorAll("[data-task-assist]").forEach(button => button.addEventListener("click", () => {
+          state.missionTab = "overview";
+          state.missionAssistResult = null;
+          renderMissionPanel();
+          document.querySelector("#missionAssistTask").value = task.id;
+          document.querySelector("#missionAssistAction").value = button.dataset.taskAssist;
+          document.querySelector("#missionAssistPrompt").focus();
+          document.querySelector("#missionAssistPrompt").scrollIntoView({ behavior: "smooth", block: "center" });
+        }));
+        row.querySelector("[data-task-edit-form]").addEventListener("submit", event => saveMissionTask(event, task));
+      });
+      panel.querySelector("#missionAddTaskForm").addEventListener("submit", addMissionTask);
+    }
+    async function updateMissionTask(task, changes) {
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/tasks/${encodeURIComponent(task.id)}`, {
+          title: changes.title ?? task.title,
+          description: changes.description ?? task.description,
+          priority: changes.priority ?? task.priority,
+          status: changes.status ?? task.status,
+          dueDate: Object.hasOwn(changes, "dueDate") ? changes.dueDate : task.dueDate,
+          subtasks: changes.subtasks ?? task.subtasks
+        }, { method: "PUT" });
+        await refreshMission();
+      } catch (error) { showToast(error.message); renderMissionPanel(); }
+    }
+    async function saveMissionTask(event, task) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      await updateMissionTask(task, {
+        title: form.elements.title.value.trim(),
+        description: form.elements.description.value.trim(),
+        priority: form.elements.priority.value,
+        status: form.elements.status.value,
+        dueDate: form.elements.dueDate.value || null,
+        subtasks: form.elements.subtasks.value.split("\n").map(item => item.trim()).filter(Boolean)
+      });
+    }
+    async function addMissionTask(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const notice = form.querySelector("#addTaskNotice");
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/tasks`, {
+          title: form.elements.title.value,
+          description: form.elements.description.value,
+          priority: form.elements.priority.value,
+          dueDate: form.elements.dueDate.value || null,
+          subtasks: form.elements.subtasks.value.split("\n").map(item => item.trim()).filter(Boolean)
+        });
+        await refreshMission();
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    async function deleteMissionTask(task) {
+      if (!confirm(`Remove "${task.title}" from this Mission?`)) return;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/tasks/${encodeURIComponent(task.id)}`, null, { method: "DELETE" });
+        await refreshMission();
+      } catch (error) { showToast(error.message); }
+    }
+    async function moveMissionTask(task, direction) {
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/tasks/${encodeURIComponent(task.id)}/move`, { direction });
+        await refreshMission();
+      } catch (error) { showToast(error.message); }
+    }
+    function renderMissionMemory(panel, mission) {
+      panel.innerHTML = `<div class="stack">
+        <section class="card stack"><div><div class="eyebrow">Private to this Mission</div><h2 style="margin:0;font:700 15px Manrope">Project Memory</h2><p class="hint">Memory is saved only when you explicitly add it. AI suggestions are never saved automatically. Editing retains the prior revision; deleting removes it.</p></div>
+          ${mission.memory.length ? mission.memory.map(item => `<article class="memory-entry">
+            <div class="mission-toolbar"><span class="memory-category">${escapeHtml(item.category)} · ${escapeHtml(item.provenance)}</span><span class="hint">${escapeHtml(new Date(item.updatedAt).toLocaleString())}</span></div>
+            <div class="memory-content">${escapeHtml(item.content)}</div>
+            <details><summary class="field-label" style="cursor:pointer">Edit this memory</summary><form class="mission-inline-form" data-memory-form="${escapeHtml(item.id)}" style="margin-top:9px">
+              <select name="category" aria-label="Memory category">${["decision","requirement","constraint","preference","fact","status"].map(category => `<option value="${category}" ${item.category === category ? "selected" : ""}>${category}</option>`).join("")}</select>
+              <textarea name="content" maxlength="1000" aria-label="Memory text" required>${escapeHtml(item.content)}</textarea>
+              <button class="small-button" type="submit">Save edit</button>
+            </form></details>
+            <div><button class="small-button" type="button" data-delete-memory="${escapeHtml(item.id)}">Delete entry</button></div>
+          </article>`).join("") : `<div class="mission-empty">No saved memory yet. Add decisions, requirements, constraints, or useful facts below. Nothing is recorded automatically.</div>`}
+          <button id="clearMissionMemory" class="button danger" type="button" ${mission.memory.length ? "" : "disabled"}>Clear all Mission memory</button>
+        </section>
+        <form id="missionMemoryForm" class="card stack"><h2 style="margin:0;font:600 13px Manrope">Add an approved note</h2><div class="field"><label for="memoryCategory">Type</label><select id="memoryCategory" name="category"><option value="decision">Confirmed decision</option><option value="requirement">Requirement</option><option value="constraint">Constraint</option><option value="preference">Preference</option><option value="fact">Project fact</option><option value="status">Status or milestone</option></select></div><div class="field"><label for="memoryContent">What should TitanAI remember for this Mission?</label><textarea id="memoryContent" name="content" maxlength="1000" required placeholder="Only save information you want reused in this Mission."></textarea></div><div class="toolbar"><button class="button primary" type="submit">Save to Project Memory</button><span id="memoryNotice" class="notice" role="status"></span></div></form>
+      </div>`;
+      panel.querySelector("#missionMemoryForm").addEventListener("submit", addMissionMemory);
+      panel.querySelector("#clearMissionMemory").addEventListener("click", clearMissionMemory);
+      panel.querySelectorAll("[data-memory-form]").forEach(form => form.addEventListener("submit", event => updateMissionMemory(event, form.dataset.memoryForm)));
+      panel.querySelectorAll("[data-delete-memory]").forEach(button => button.addEventListener("click", () => deleteMissionMemory(button.dataset.deleteMemory)));
+    }
+    async function addMissionMemory(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const notice = form.querySelector("#memoryNotice");
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/memory`, {
+          category: form.elements.category.value, content: form.elements.content.value.trim()
+        });
+        await refreshMission();
+        state.missionTab = "memory";
+        renderMissionPanel();
+        showToast("Added your approved note to this Mission's memory.");
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+    }
+    async function updateMissionMemory(event, memoryId) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/memory/${encodeURIComponent(memoryId)}`, {
+          category: form.elements.category.value, content: form.elements.content.value.trim()
+        }, { method: "PUT" });
+        await refreshMission();
+        showToast("Memory updated. Its previous revision was retained.");
+      } catch (error) { showToast(error.message); }
+    }
+    async function deleteMissionMemory(memoryId) {
+      if (!confirm("Delete this saved memory entry?")) return;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/memory/${encodeURIComponent(memoryId)}`, null, { method: "DELETE" });
+        await refreshMission();
+      } catch (error) { showToast(error.message); }
+    }
+    async function clearMissionMemory() {
+      if (!confirm("Clear all saved memory for this Mission? Tasks and deliverables will remain. This cannot be undone.")) return;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/memory`, null, { method: "DELETE" });
+        await refreshMission();
+        showToast("Mission memory cleared.");
+      } catch (error) { showToast(error.message); }
+    }
+    function renderMissionFiles(panel, mission) {
+      panel.innerHTML = `<div class="stack">
+        <section class="card stack"><div><div class="eyebrow">Private project sources</div><h2 style="margin:0;font:700 15px Manrope">Mission files</h2><p class="hint">Attach PDF or TXT text to this Mission. Extracted text is stored in the private SQLite database (not the original file) and can inform Mission assistance. Scanned PDFs require OCR and aren't supported.</p></div>
+          <form id="missionDocumentForm" class="mission-inline-form"><label class="field-label" for="missionFile">Choose a PDF or TXT file · up to 8 MB</label><input id="missionFile" type="file" accept=".pdf,.txt,application/pdf,text/plain" required><div class="hint">Each Mission can store 20 files and up to 500,000 extracted characters. The original file is not retained.</div><div class="progress" id="missionFileProgress" hidden><span></span></div><button class="button primary" type="submit">Upload to this Mission</button><div id="missionFileNotice" class="notice" role="status"></div></form>
+          ${mission.documents.length ? mission.documents.map(document => `<div class="mission-document-row"><div><div class="document-name">${escapeHtml(document.fileName)}</div><div class="document-meta">${document.passageCount} passages · ${document.characterCount} characters · added ${escapeHtml(new Date(document.addedAt).toLocaleDateString())}</div></div><button class="small-button" type="button" data-delete-document="${escapeHtml(document.id)}">Remove</button></div>`).join("") : `<div class="mission-empty">No documents attached. Upload a project reference or notes to make them available to Mission-aware tasks.</div>`}
+        </section>
+      </div>`;
+      panel.querySelector("#missionDocumentForm").addEventListener("submit", uploadMissionDocument);
+      panel.querySelectorAll("[data-delete-document]").forEach(button => button.addEventListener("click", () => deleteMissionDocument(button.dataset.deleteDocument)));
+    }
+    async function uploadMissionDocument(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const file = form.querySelector("#missionFile").files[0];
+      const notice = form.querySelector("#missionFileNotice");
+      const progress = form.querySelector("#missionFileProgress");
+      if (!file || file.size > 8 * 1024 * 1024) { notice.textContent = "Choose a PDF or TXT file up to 8 MB."; notice.className = "notice error"; return; }
+      const data = new FormData();
+      data.append("file", file);
+      data.append("missionId", state.activeMissionId);
+      progress.hidden = false;
+      progress.querySelector("span").style.width = "0%";
+      notice.textContent = `Extracting ${file.name}…`;
+      try {
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/api/knowledge/upload");
+          xhr.upload.onprogress = upload => {
+            if (upload.lengthComputable) progress.querySelector("span").style.width = `${Math.max(3, Math.round(upload.loaded / upload.total * 100))}%`;
+          };
+          xhr.onload = () => {
+            let result = {};
+            try { result = JSON.parse(xhr.responseText); } catch { /* Display the generic response error below. */ }
+            if (xhr.status >= 200 && xhr.status < 300) resolve(result);
+            else reject(new Error(result.detail || result.message || result.title || "The document could not be attached."));
+          };
+          xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+          xhr.send(data);
+        });
+        notice.textContent = "Extracted text saved to this Mission.";
+        notice.className = "notice success";
+        await refreshMission();
+      } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+      finally { setTimeout(() => { if (progress.isConnected) progress.hidden = true; }, 800); }
+    }
+    async function deleteMissionDocument(documentId) {
+      if (!confirm("Remove this document and its extracted text from the Mission?")) return;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/documents/${encodeURIComponent(documentId)}`, null, { method: "DELETE" });
+        await refreshMission();
+      } catch (error) { showToast(error.message); }
+    }
+    function renderMissionDeliverables(panel, mission) {
+      panel.innerHTML = `<div class="stack"><section class="card stack"><div><div class="eyebrow">Saved Mission outputs</div><h2 style="margin:0;font:700 15px Manrope">Deliverables</h2><p class="hint">AI-generated first drafts are saved here and attached to the task where appropriate. A saved draft does not mark its task complete or perform external actions.</p></div>
+        ${mission.deliverables.length ? mission.deliverables.map(item => {
+          const task = mission.tasks.find(candidate => candidate.id === item.taskId);
+          return `<article class="memory-entry"><div class="mission-toolbar"><div><strong>${escapeHtml(item.title)}</strong><div class="document-meta">${task ? `Task: ${escapeHtml(task.title)} · ` : ""}${escapeHtml(new Date(item.createdAt).toLocaleString())}</div></div><div class="toolbar"><button class="small-button" type="button" data-edit-deliverable="${escapeHtml(item.id)}">Edit in Document Assistant</button><button class="small-button" type="button" data-copy-deliverable="${escapeHtml(item.id)}">Copy</button><button class="small-button" type="button" data-delete-deliverable="${escapeHtml(item.id)}">Delete</button></div></div><div class="markdown deliverable-content">${renderMarkdown(item.content)}</div></article>`;
+        }).join("") : `<div class="mission-empty">No deliverables yet. Ask the Mission assistant for a first draft on a task to save it here.</div>`}
+        </section></div>`;
+      panel.querySelectorAll("[data-copy-deliverable]").forEach(button => button.addEventListener("click", async () => {
+        const item = mission.deliverables.find(deliverable => deliverable.id === button.dataset.copyDeliverable);
+        try { await navigator.clipboard.writeText(item.content); button.textContent = "Copied"; }
+        catch { showToast("Clipboard access is unavailable in this browser."); }
+      }));
+      panel.querySelectorAll("[data-edit-deliverable]").forEach(button => button.addEventListener("click", () => {
+        const item = mission.deliverables.find(deliverable => deliverable.id === button.dataset.editDeliverable);
+        try { sessionStore.setItem("titanai-writing-draft", item.content); } catch { showToast("Could not pass the draft to Document Assistant."); return; }
+        setPage("writing");
+      }));
+      panel.querySelectorAll("[data-delete-deliverable]").forEach(button => button.addEventListener("click", async () => {
+        if (!confirm("Delete this saved deliverable?")) return;
+        try {
+          await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/deliverables/${encodeURIComponent(button.dataset.deleteDeliverable)}`, null, { method: "DELETE" });
+          await refreshMission();
+        } catch (error) { showToast(error.message); }
+      }));
+    }
+    function renderMissionActivity(panel, mission) {
+      panel.innerHTML = `<section class="card stack"><div><div class="eyebrow">Mission record</div><h2 style="margin:0;font:700 15px Manrope">Activity</h2><p class="hint">A record of task changes, saved memory, attached documents, deliverables, and AI assistance.</p></div>${mission.activity.length ? `<div class="mission-activity">${mission.activity.map(item => `<div class="activity-item"><span class="activity-dot"></span><span>${escapeHtml(item.message)}<br><span class="hint">${escapeHtml(new Date(item.createdAt).toLocaleString())}</span></span></div>`).join("")}</div>` : `<div class="mission-empty">Mission activity will appear here.</div>`}</section>`;
+    }
+    function selectMissionTab(tab) {
+      state.missionTab = tab;
+      workspace.querySelectorAll("[data-mission-tab]").forEach(button => {
+        button.classList.toggle("active", button.dataset.missionTab === tab);
+        button.setAttribute("aria-selected", String(button.dataset.missionTab === tab));
+      });
+      renderMissionPanel();
+    }
+    async function refreshMission() {
+      if (!state.activeMissionId) return;
+      state.activeMission = await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}`, null, { method: "GET" });
+      const mission = state.activeMission;
+      const tabLabels = {
+        overview: "Overview",
+        tasks: `Tasks (${mission.tasks.length})`,
+        memory: `Project Memory (${mission.memory.length})`,
+        files: `Files (${mission.documents.length})`,
+        deliverables: "Deliverables",
+        activity: "Activity"
+      };
+      workspace.querySelectorAll("[data-mission-tab]").forEach(button => {
+        button.textContent = tabLabels[button.dataset.missionTab];
+      });
+      if (state.missionTab === "overview") {
+        await renderMissionWorkspace();
+      } else {
+        const panel = document.querySelector("#missionPanel");
+        if (panel) {
+          workspace.querySelector(".page-heading h1").textContent = state.activeMission.title;
+          renderMissionPanel();
+        }
+      }
+    }
+    async function setMissionStatus(status) {
+      try {
+        state.activeMission = await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}/status`, { status });
+        await renderMissions();
+      } catch (error) { showToast(error.message); }
+    }
+    async function deleteMission() {
+      if (!confirm("Delete this Mission and all of its tasks, attached document text, deliverables, memory, and activity? This cannot be undone.")) return;
+      try {
+        await api(`/api/missions/${encodeURIComponent(state.activeMissionId)}`, null, { method: "DELETE" });
+        state.activeMissionId = null;
+        state.activeMission = null;
+        await renderMissions();
+        showToast("Mission and its associated data were deleted.");
+      } catch (error) { showToast(error.message); }
+    }
+    function renderWriting() {
+      workspace.innerHTML = `
+        ${pageHeader("Write with confidence", "Document Assistant", "Polish a draft, shift its tone, make a summary, translate it, or turn your notes into a professional email.")}
+        <form id="writingForm" class="card stack">
+          <div class="field"><label for="sourceText">Your text</label><textarea id="sourceText" class="large" maxlength="20000" placeholder="Paste or write your text here..." required></textarea><div class="hint">Up to 20,000 characters. Your text is sent securely to the configured AI provider for processing.</div></div>
+          <div class="grid-two">
+            <div class="field"><label for="writingAction">What would you like to do?</label><select id="writingAction"><option value="grammar">Fix grammar and spelling</option><option value="rewrite">Rewrite in a different tone</option><option value="summarize">Summarize</option><option value="translate">Translate</option><option value="clarity">Improve clarity and structure</option><option value="email">Draft a professional email</option></select></div>
+            <div id="writingExtra" class="field"><label for="writingParameter">Tone</label><input id="writingParameter" maxlength="60" placeholder="e.g. friendly, confident, concise"></div>
+          </div>
+          <div class="toolbar"><button class="button primary" type="submit">Improve text</button><span id="writingNotice" class="notice" role="status"></span></div>
+        </form>
+        <section id="writingResult" class="card" style="margin-top:16px" hidden>
+          <div class="toolbar" style="justify-content:space-between;margin-bottom:14px"><h2 style="margin:0;font:600 14px Manrope">Compare your text</h2><button id="copyRevision" class="small-button" type="button">Copy revised text</button></div>
+          <div class="compare"><div><h2>Original</h2><div id="originalText" class="markdown"></div></div><div><h2>Revised</h2><div id="revisedText" class="markdown"></div></div></div>
+        </section>`;
+      const action = document.querySelector("#writingAction");
+      const extra = document.querySelector("#writingExtra");
+      const updateExtra = () => {
+        const translate = action.value === "translate";
+        const show = translate || action.value === "rewrite";
+        extra.hidden = !show;
+        extra.querySelector("label").textContent = translate ? "Translate to" : "Tone";
+        extra.querySelector("input").placeholder = translate ? "e.g. Spanish" : "e.g. friendly, confident, concise";
+      };
+      action.addEventListener("change", updateExtra);
+      updateExtra();
+      document.querySelector("#writingForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const source = document.querySelector("#sourceText").value.trim();
+        const mode = action.value;
+        const parameter = document.querySelector("#writingParameter").value;
+        const notice = document.querySelector("#writingNotice");
+        const result = document.querySelector("#writingResult");
+        notice.innerHTML = `<span class="loading"><span class="spinner"></span>Working on your text…</span>`;
+        notice.className = "notice";
+        result.hidden = true;
+        try {
+          const answer = await api("/api/transform", {
+            action: mode, text: source,
+            tone: mode === "rewrite" ? parameter : "",
+            language: mode === "translate" ? parameter : ""
+          });
+          document.querySelector("#originalText").innerHTML = renderMarkdown(source);
+          document.querySelector("#revisedText").innerHTML = renderMarkdown(answer.answer);
+          result.dataset.revision = answer.answer;
+          result.hidden = false;
+          notice.textContent = "Your original stays here while you compare the revision.";
+          notice.className = "notice success";
+        } catch (error) { notice.textContent = error.message; notice.className = "notice error"; }
+      });
+      document.querySelector("#copyRevision").addEventListener("click", async event => {
+        try { await navigator.clipboard.writeText(document.querySelector("#writingResult").dataset.revision || ""); event.currentTarget.textContent = "Copied"; }
+        catch { showToast("Clipboard access is unavailable in this browser."); }
+      });
+      try {
+        const draft = sessionStore.getItem("titanai-writing-draft");
+        if (draft) {
+          document.querySelector("#sourceText").value = draft;
+          sessionStore.removeItem("titanai-writing-draft");
+        }
+      } catch { /* The writing workspace remains usable if session storage is disabled. */ }
+    }
+    function renderSettings() {
+      workspace.innerHTML = `
+        ${pageHeader("Your workspace", "Settings & privacy", "Control your theme and clear information stored in this browser. AI requests are sent to Groq through the TitanAI server.")}
+        <section class="card settings-list">
+          <div class="setting-row"><div><div class="setting-title">Appearance</div><div class="setting-description">Choose a comfortable theme for your workspace.</div></div><button id="settingsTheme" class="button secondary" type="button">${state.theme === "dark" ? "Switch to light" : "Switch to dark"}</button></div>
+          <div class="setting-row"><div><div class="setting-title">Conversation history</div><div class="setting-description">${state.chats.length} chat${state.chats.length === 1 ? "" : "s"} stored in this browser only.</div></div><button id="clearChats" class="button danger" type="button">Clear chats</button></div>
+          <div class="setting-row"><div><div class="setting-title">Action plans</div><div class="setting-description">${state.plans.length} plan${state.plans.length === 1 ? "" : "s"} stored in this browser only.</div></div><button id="clearPlans" class="button danger" type="button">Clear plans</button></div>
+          <div class="setting-row"><div><div class="setting-title">Uploaded documents</div><div class="setting-description">Document text is held temporarily in server memory for up to 30 minutes. Remove a document in Knowledge Hub; uploads are not written to disk.</div></div><button id="removeDocuments" class="button danger" type="button">Remove all</button></div>
+          <div class="setting-row"><div><div class="setting-title">AI and web search providers</div><div class="setting-description">TitanAI sends chat requests to Groq. When Search the web is enabled, your question is also sent to Tavily and its results are sent to Groq. Provider API keys are stored on the server; never enter passwords or highly sensitive personal information.</div></div><span class="hint">Server-side</span></div>
+        </section>`;
+      document.querySelector("#settingsTheme").addEventListener("click", () => { setTheme(state.theme === "dark" ? "light" : "dark"); renderSettings(); });
+      document.querySelector("#clearChats").addEventListener("click", () => {
+        if (!confirm("Clear all saved chat history from this browser?")) return;
+        state.chats = []; state.chatId = null; saveChats(); renderSettings();
+      });
+      document.querySelector("#clearPlans").addEventListener("click", () => {
+        if (!confirm("Clear all saved plans from this browser?")) return;
+        state.plans = []; state.selectedPlanId = null; savePlans(); renderSettings();
+      });
+      document.querySelector("#removeDocuments").addEventListener("click", async () => {
+        const documents = [...state.documents];
+        const outcomes = await Promise.allSettled(documents.map(document =>
+          api(`/api/knowledge/${encodeURIComponent(document.documentId)}`, null, { method: "DELETE" })));
+        const failed = outcomes.filter(outcome => outcome.status === "rejected").length;
+        state.documents = documents.filter((_, index) => outcomes[index].status === "rejected");
+        saveJson("titanai-documents-session", state.documents, sessionStore);
+        renderSettings();
+        if (failed) showToast(`${failed} document${failed === 1 ? "" : "s"} could not be removed from server memory and will expire automatically.`);
+      });
+    }
+    document.querySelectorAll(".nav-item[data-page]").forEach(button => button.addEventListener("click", () => setPage(button.dataset.page)));
+    document.querySelector("#newChat").addEventListener("click", () => { state.chatId = null; state.missionChatId = null; setPage("chat"); document.querySelector("#chatInput")?.focus(); });
+    chatHistory.addEventListener("click", event => {
+      const button = event.target.closest("[data-chat-id]");
+      if (!button) return;
+      state.chatId = button.dataset.chatId;
+      state.missionChatId = null;
+      setPage("chat");
+      renderHistory();
+    });
+    document.querySelector("#themeToggle").addEventListener("click", () => setTheme(state.theme === "dark" ? "light" : "dark"));
+    document.querySelector("#sidebarToggle").addEventListener("click", () => sidebar.classList.toggle("open"));
+    document.addEventListener("click", event => {
+      if (window.innerWidth <= 680 && sidebar.classList.contains("open") &&
+          !sidebar.contains(event.target) && !event.target.closest("#sidebarToggle")) sidebar.classList.remove("open");
+    });
+    fetch("/api/status").then(response => response.json()).then(status => {
+      document.querySelector("#statusText").textContent = status.configured ? "AI ready" : "API key needed";
+      if (!status.configured) document.querySelector("#serviceStatus").classList.add("offline");
+      webSearchConfigured = Boolean(status.webSearchConfigured);
+      webSearchMonthlyRemaining = Number.isInteger(status.webSearchMonthlyRemaining)
+        ? status.webSearchMonthlyRemaining
+        : 900;
+      const searchCheckbox = document.querySelector("#chatSearchWeb");
+      if (searchCheckbox) {
+        searchCheckbox.disabled = !webSearchConfigured || webSearchMonthlyRemaining <= 0;
+        searchCheckbox.parentElement.title = webSearchConfigured
+          ? webSearchMonthlyRemaining > 0
+            ? `One credit per new query; repeats are cached for an hour. ${webSearchMonthlyRemaining} monthly searches remain.`
+            : "The monthly web search allowance is used up."
+          : "Set TAVILY_API_KEY on the server to enable web search.";
+      }
+    }).catch(() => {
+      document.querySelector("#statusText").textContent = "Assistant unavailable";
+      document.querySelector("#serviceStatus").classList.add("offline");
+    });
+    setTheme(state.theme);
+    renderHistory();
+    setPage("chat");
+  </script>
+</body>
+</html>
